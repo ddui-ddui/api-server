@@ -11,4 +11,9 @@
 - dotenv
 
 ## API
-[Weather Api](https://www.weatherapi.com)를 사용함.
+한국 공공 데이터의 오픈 API를 사용함.
+### 미세먼지 데이터
+에어코리아
+
+### 날씨 데이터
+기상청
