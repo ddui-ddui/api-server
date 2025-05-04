@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 load_dotenv()
 
@@ -8,14 +8,20 @@ class Settings(BaseSettings):
     """Application settings."""
 
     # API
-    API_V1_STR: str = "/api/v1"
+    API_V1_URL: str = "/api/v1"
     PROJECT_NAME: str = "DDUI DDUI API Server"
     
     DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
+
+    # SSL 검증
+    SSL_VERIFY: bool = os.getenv("SSL_VERIFY", "True").lower() == "true"
+
     
     # Weather API
-    WEATHER_API_KEY: str = os.getenv("WEATHER_API_KEY", "")
-    WEATHER_API_URL: str = os.getenv("WEATHER_API_URL", "http://api.weatherapi.com/v1")
+    GOV_DATA_API_KEY: str = os.getenv("GOV_DATA_API_KEY", "")
+    GOV_DATA_BASE_URL: str = os.getenv("GOV_DATA_BASE_URL", "https://apis.data.go.kr")
+    GOV_DATA_WEATHER_ULTRA_SHORT_URL: str = os.getenv("GOV_DATA_WEATHER_ULTRA_SHORT_URL", "")
+    GOV_DATA_WEATHER_SHORT_URL: str = os.getenv("GOV_DATA_WEATHER_SHORT_URL", "")
     
     # Server Info
     HOST: str = os.getenv("HOST", "0.0.0.0")

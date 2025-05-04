@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from app.core.config import settings
+from app.api.api import api_router
 
 app = FastAPI(
     title="DDUI DDUI API Server",
@@ -20,7 +22,8 @@ app = FastAPI(
     ],
 )
 
-@app.get("/")
-async def root():
-    """API 상태 확인용"""
-    return {"status": "ok", "message": "API 작동 중"}
+app.include_router(api_router, prefix=settings.API_V1_URL)
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app.main:app", host=settings.HOST, port=settings.PORT, reload=settings.DEBUG)
