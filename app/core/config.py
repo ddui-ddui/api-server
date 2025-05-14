@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     GOV_DATA_BASE_URL: str = "https://apis.data.go.kr"
     GOV_DATA_WEATHER_ULTRA_SHORT_URL: str = ""
     GOV_DATA_WEATHER_SHORT_URL: str = ""
+    GOV_DATA_WEATHER_MID_OUTLOOK_URL: str = ""
+    GOV_DATA_WEATHER_MID_LAND_URL: str = ""
     
     class Config:
         env_file = ".env"
