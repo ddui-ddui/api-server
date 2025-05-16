@@ -7,7 +7,6 @@ directions = [
 ]
 
 def get_wind_direction(degree: int) -> str:
-    print(degree)
     try:
         degree = int(degree)
     except (ValueError, TypeError):

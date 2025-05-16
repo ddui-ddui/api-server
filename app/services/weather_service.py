@@ -1,12 +1,13 @@
 import httpx
 from fastapi import HTTPException
 from app.core.config import settings
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from datetime import datetime, timedelta
 from app.utils.convert_for_grid import mapToGrid
 from app.common.http_client import make_request
 from urllib.parse import unquote
 from app.utils.weather_format_utils import get_wind_direction, convert_wind_speed, convert_weather_condition
+from app.services.airQuality import find_nearby_air_quality_station, get_air_quality_data
 
 
 
@@ -118,10 +119,7 @@ async def get_hourly_forecast(lat: float, lon: float, hours: int = 12) -> Dict[s
     :return: 시간별 예보 데이터 리스트
     """
     # 좌표 변환 (실제 변환 필요 시 주석 해제)
-    # nx, ny = mapToGrid(lat, lon)
-    
-    nx = 60
-    ny = 127
+    nx, ny = mapToGrid(lat, lon)
     
     # Current time
     now = datetime.now()
@@ -224,6 +222,14 @@ async def get_hourly_forecast(lat: float, lon: float, hours: int = 12) -> Dict[s
                 forecasts_by_time[key]["min_temperature"] = float(value)
             elif category == "TMX":  # 최고기온
                 forecasts_by_time[key]["max_temperature"] = float(value)
+                
+        # 미세먼지 측정소 찾기
+        station = await find_nearby_air_quality_station(lat, lon)
+        if not station:
+            print("측정소를 찾을 수 없습니다.")
+        
+        # await get_air_quality_data(station_name=station["stationName"])
+        
         
         # 현재 시간부터 지정된 시간까지의 예보만 추출
         result_forecasts = []

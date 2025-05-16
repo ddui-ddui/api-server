@@ -17,3 +17,14 @@
 
 ### 날씨 데이터
 기상청
+
+### 설치
+#### 라이브러리 관련파일 갱신
+./generate-reqs.sh
+또는
+./generate-reqs.bat
+#### 라이브러리 설치
+```bash
+pip install -r requirements.txt
+pip install -r dev-requirements.txt
+```
