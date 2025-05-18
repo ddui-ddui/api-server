@@ -209,12 +209,13 @@ async def get_hourly_forecast(lat: float, lon: float, hours: int = 12) -> Dict[s
             forecast = forecasts_by_time[key]
             # 필수 필드 확인
             required_fields = ["temperature", "sky_condition", "precipitation_type", "precipitation_probability"]
-            # 강수확률 프린트
         
             if all(field in forecast for field in required_fields):
                 # 날짜 형식 정리
                 fcst_date = forecast["forecast_date"]
                 fcst_time = forecast["forecast_time"]
+                forecast["base_date"] = fcst_date
+                forecast["base_time"] = fcst_time
                 result_forecasts.append(forecast)
                 count += 1
                 
@@ -224,12 +225,8 @@ async def get_hourly_forecast(lat: float, lon: float, hours: int = 12) -> Dict[s
 
         # 메타데이터 추가
         result = {
-            "base_date": base_date,
-            "base_time": base_time,
-            "base_time_formatted": f"{base_date[:4]}-{base_date[4:6]}-{base_date[6:]} {base_time[:2]}:{base_time[2:]}",
             "forecasts": result_forecasts
         }
-        
         return result
             
     except httpx.HTTPError as e:

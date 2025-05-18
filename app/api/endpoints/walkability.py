@@ -13,7 +13,8 @@ async def get_walkability_hourly (
     region: str = Query("서울", description="지역명"),
     hours: int = Query(12, description="시간 (0-12)", ge=1, le=12),
     dog_size: str = Query("medium", description="견종 크기 (small/medium/large)"),
-    sensitivities: str = Query("", description="민감군 목록 (쉼표로 구분)")
+    sensitivities: str = Query("", description="민감군 목록 (쉼표로 구분)"),
+    air_quality_type: str = Query("korean", description="대기질 기준 (korean/who)"),
     ) -> Dict[str, Any]:
     """
     현재 날씨 정보 조회
@@ -24,7 +25,7 @@ async def get_walkability_hourly (
     :return: 현재 날씨 정보
     """
     try:
-        walkability = await get_walkability_houly(lat, lon, region, hours, dog_size, sensitivities)
+        walkability = await get_walkability_houly(lat, lon, region, hours, dog_size, sensitivities, air_quality_type)
         return walkability
     except HTTPException as e:
         raise e

@@ -166,6 +166,7 @@ async def get_hourly_air_quality(lat: float, lon: float, region: str, hours: int
     now = datetime.now()
     param_date = now.strftime("%Y-%m-%d")
     current_hour = now.hour
+    current_minute = now.minute
     url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_AIRQUALITY_HOURLY_URL}"
     
     params = {
@@ -184,15 +185,19 @@ async def get_hourly_air_quality(lat: float, lon: float, region: str, hours: int
         items = data.get("response", {}).get("body", {}).get("items", [])
         
         if not items:
-            raise HTTPException(status_code=404, detail="대기질 예보 데이터를 찾을 수 없습니다.")
+            print("대기질 예보 데이터가 없습니다.")
+            return {'forecasts': []}
         
         forecast_time = [5, 11, 17, 23]
         closest_time = None
         
         for time in reversed(forecast_time):
+            if time == current_hour and current_minute < 30:
+                continue
             if time <= current_hour:
                 closest_time = time
                 break
+            
         if closest_time is None:
             closest_time = 23
             
@@ -242,24 +247,15 @@ async def get_hourly_air_quality(lat: float, lon: float, region: str, hours: int
         
             pm10_grade = convert_grade_to_value(pm10_grade_str)
             pm25_grade = convert_grade_to_value(pm25_grade_str)
-            
-            air_quality_grade = pm10_grade
-                
-            # 초미세먼지에 가중치 부여
-            if pm25_grade > pm10_grade:
-                air_quality_grade = pm25_grade
-            elif pm25_grade >= 3:
-                air_quality_grade = max(air_quality_grade, 3)
                 
             forecast_date_str = forecast_date.strftime("%Y%m%d")
             forecast_hour = f"{forecast_hour:02d}00"
             
             forecasts.append({
-                "forecast_date": forecast_date_str,
-                "forecast_time": forecast_hour,
+                "base_date": forecast_date_str,
+                "base_time": forecast_hour,
                 "pm10_grade": pm10_grade,
-                "pm25_grade": pm25_grade,
-                "air_quality_grade": air_quality_grade,
+                "pm25_grade": pm25_grade
             })
             
         result = {
