@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     # Air Quality API URL
     GOV_DATA_AIRQUALITY_NEARSATIONS_URL: str = ""
     GOV_DATA_AIRQUALITY_STATION_URL: str = ""
+    GOV_DATA_AIRQUALITY_HOURLY_URL: str = ""
     
     class Config:
         env_file = ".env"

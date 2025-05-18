@@ -7,39 +7,29 @@ class DogSize(str, Enum):
     MEDIUM = "MEDIUM"
     LARGE = "LARGE"
 
+class Sensitivity(str, Enum):
+    OBESITY = "OBESITY"               # 비만
+    HIP_DYSPLASIA = "HIP_DYSPLASIA"   # 고관절 이상
+    PUPPY = "PUPPY"                   # 6개월 미만
+    SENIOR = "SENIOR"                 # 노견
+    BRACHYCEPHALIC = "BRACHYCEPHALIC" # 단두종
+    HEART_DISEASE = "HEART_DISEASE"   # 심장병
+    RESPIRATORY = "RESPIRATORY"       # 호흡기 질환
+    SINGLE_COAT = "SINGLE_COAT"       # 단일모
+    DOUBLE_COAT = "DOUBLE_COAT"       # 이중모
+    LONG_HAIR = "LONG_HAIR"           # 장모
+    SHORT_HAIR = "SHORT_HAIR"         # 단모
+
 class Location(BaseModel):
     latitude: float = Field(..., description="위도", example=37.5665)
     longitude: float = Field(..., description="경도", example=126.9780)
 
 class Dog(BaseModel):
     size: DogSize = Field(..., description="강아지 크기")
-    # sensitivities: List[Sensitivity] = Field(default=[], description="강아지 민감 요소")
+    sensitivities: List[Sensitivity] = Field(default=[], description="강아지 민감 요소")
 
 class WalkabilityRequest(BaseModel):
     location: Location
+    region: str = Field(..., description="지역명", example="서울")
+    hours: int = Field(12, description="조회할 시간 수", ge=1, le=12)
     dog: Dog
-
-class WalkabilityLevel(str, Enum):
-    EXCELLENT = "EXCELLENT"
-    GOOD = "GOOD"
-    MODERATE = "MODERATE"
-    POOR = "POOR"
-    BAD = "BAD"
-
-class WalkabilityScore(BaseModel):
-    score: int = Field(..., description="산책 적합도 점수 (0-100)", example=85)
-    level: WalkabilityLevel = Field(..., description="산책 적합도 등급")
-
-class WeatherInfo(BaseModel):
-    temperature: float = Field(..., description="기온 (℃)")
-    humidity: int = Field(..., description="습도 (%)")
-    precipitation_type: int = Field(..., description="강수형태 (0:없음, 1:비, 2:비/눈, 3:눈, 4:소나기)")
-    rainfall: float = Field(..., description="1시간 강수량 (mm)")
-    sky_condition: int = Field(..., description="하늘상태 (1:맑음, 3:구름많음, 4:흐림)")
-    wind_speed: float = Field(..., description="풍속 (m/s)")
-    dust_level: str = Field(..., description="미세먼지 등급")
-    forecast_time: str = Field(..., description="예보 시간")
-
-class WalkabilityResponse(BaseModel):
-    walkability: WalkabilityScore
-    weather: WeatherInfo

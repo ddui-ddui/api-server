@@ -7,7 +7,7 @@ from app.utils.convert_for_grid import mapToGrid
 from app.common.http_client import make_request
 from urllib.parse import unquote
 from app.utils.weather_format_utils import get_wind_direction, convert_wind_speed, convert_weather_condition
-from app.services.airQuality import find_nearby_air_quality_station, get_air_quality_data
+from app.services.air_quality import find_nearby_air_quality_station, get_air_quality_data
 
 
 
@@ -19,12 +19,7 @@ async def get_ultra_short_forecast(lat: float, lon: float) -> Dict[str, Any]:
     :return: 초단기 예보 데이터
     """
 
-    # Coordinates for Seoul
-    # nx, ny = mapToGrid(lat, lon)
-
-    nx = 60
-    ny = 127
-
+    nx, ny = mapToGrid(lat, lon)
     
     # Current time
     now = datetime.now()
@@ -112,18 +107,19 @@ async def get_ultra_short_forecast(lat: float, lon: float) -> Dict[str, Any]:
 
 async def get_hourly_forecast(lat: float, lon: float, hours: int = 12) -> Dict[str, Any]:
     """
-    시간별 예보 조회 (최대 67시간)
+    시간별 예보 조회 (최대 12시간)
     :param lat: 위도
     :param lon: 경도
     :param hours: 조회할 시간 수 (기본값: 12시간)
     :return: 시간별 예보 데이터 리스트
     """
-    # 좌표 변환 (실제 변환 필요 시 주석 해제)
     nx, ny = mapToGrid(lat, lon)
     
-    # Current time
     now = datetime.now()
     base_date = now.strftime("%Y%m%d")
+    current_time = now.strftime("%H%M")
+    current_date = now.strftime("%Y%m%d")
+
     
     # 예보 기준 시간 설정
     # 기상청은 3시간 단위로 예보를 제공함.
@@ -161,14 +157,10 @@ async def get_hourly_forecast(lat: float, lon: float, hours: int = 12) -> Dict[s
         response = await make_request(url=url, params=params)
         response.raise_for_status()
         data = response.json()
-        
-        # 응답 코드 확인
         response_code = data.get("response", {}).get("header", {}).get("resultCode")
         if response_code != "00":
             response_msg = data.get("response", {}).get("header", {}).get("resultMsg", "Unknown error")
             raise HTTPException(status_code=500, detail=f"기상청 API 오류: {response_msg}")
-        
-        # 결과 데이터 추출
         items = data.get("response", {}).get("body", {}).get("items", {}).get("item", [])
         
         if not items:
@@ -178,7 +170,7 @@ async def get_hourly_forecast(lat: float, lon: float, hours: int = 12) -> Dict[s
         forecasts_by_time = {}
         for item in items:
             fcst_date = item.get("fcstDate")
-            fcst_time = item.get("fcstTime")
+            fcst_time = item.get("fcstTime")            
             key = f"{fcst_date}-{fcst_time}"
             
             if key not in forecasts_by_time:
@@ -187,75 +179,42 @@ async def get_hourly_forecast(lat: float, lon: float, hours: int = 12) -> Dict[s
                     "forecast_time": fcst_time
                 }
             
-            # 값 추가 (카테고리별로)
             category = item.get("category")
             value = item.get("fcstValue")
             
-            # 각 카테고리 처리
             if category == "TMP":  # 기온
                 forecasts_by_time[key]["temperature"] = float(value)
             elif category == "POP":  # 강수확률
                 forecasts_by_time[key]["precipitation_probability"] = int(value)
-            elif category == "PTY":  # 강수형태
+            elif category == "PTY":  # 강수형태 (0:없음, 1:비, 2:비/눈, 3:눈, 4:소나기)
                 forecasts_by_time[key]["precipitation_type"] = int(value)
-            elif category == "PCP":  # 1시간 강수량
-                if value == "강수없음":
-                    forecasts_by_time[key]["rainfall"] = 0.0
-                elif "미만" in value:
-                    # "1 미만"과 같은 값을 처리
-                    forecasts_by_time[key]["rainfall"] = 0.1  # 또는 다른 적절한 기본값
-                else:
-                    try:
-                        forecasts_by_time[key]["rainfall"] = float(value.replace("mm", ""))
-                    except ValueError:
-                        # 변환 실패 시 기본값 사용
-                        forecasts_by_time[key]["rainfall"] = 0.0
-            elif category == "REH":  # 습도
-                forecasts_by_time[key]["humidity"] = int(value)
-            elif category == "SKY":  # 하늘상태
+            elif category == "SKY":  # 하늘상태 (1:맑음, 3:구름많음, 4:흐림)
                 forecasts_by_time[key]["sky_condition"] = int(value)
-            elif category == "WSD":  # 풍속
-                forecasts_by_time[key]["wind_speed"] = float(value)
-            elif category == "VEC":  # 풍향
-                forecasts_by_time[key]["wind_direction"] = int(value)
-            elif category == "TMN":  # 최저기온
-                forecasts_by_time[key]["min_temperature"] = float(value)
-            elif category == "TMX":  # 최고기온
-                forecasts_by_time[key]["max_temperature"] = float(value)
-                
-        # 미세먼지 측정소 찾기
-        station = await find_nearby_air_quality_station(lat, lon)
-        if not station:
-            print("측정소를 찾을 수 없습니다.")
         
-        # await get_air_quality_data(station_name=station["stationName"])
-        
+        future_forecasts = {}
+        for key, forecast in forecasts_by_time.items():
+            fcst_date = forecast["forecast_date"]
+            fcst_time = forecast["forecast_time"]
+            
+            if (fcst_date > current_date) or (fcst_date == current_date and fcst_time > current_time):
+                future_forecasts[key] = forecast
         
         # 현재 시간부터 지정된 시간까지의 예보만 추출
         result_forecasts = []
         
         # 시간 정렬
-        sorted_keys = sorted(forecasts_by_time.keys())
+        sorted_keys = sorted(future_forecasts.keys())
         count = 0
         for key in sorted_keys:
             forecast = forecasts_by_time[key]
             # 필수 필드 확인
-            required_fields = ["temperature", 
-                               "precipitation_probability", 
-                               "sky_condition", 
-                               "humidity", 
-                               "wind_speed", 
-                               "wind_direction", 
-                               "precipitation_type", 
-                               "rainfall"
-                               ]
+            required_fields = ["temperature", "sky_condition", "precipitation_type", "precipitation_probability"]
+            # 강수확률 프린트
+        
             if all(field in forecast for field in required_fields):
                 # 날짜 형식 정리
                 fcst_date = forecast["forecast_date"]
                 fcst_time = forecast["forecast_time"]
-                forecast["forecast_time_formatted"] = f"{fcst_date[:4]}-{fcst_date[4:6]}-{fcst_date[6:]} {fcst_time[:2]}:{fcst_time[2:]}"
-                forecast["wind_speed"] = convert_wind_speed(forecast["wind_speed"], "m/s")
-                forecast["wind_direction"] = get_wind_direction(forecast["wind_direction"])
                 result_forecasts.append(forecast)
                 count += 1
                 

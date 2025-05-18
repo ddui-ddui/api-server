@@ -1,9 +1,7 @@
 from fastapi import APIRouter
-from app.api.endpoints import weather
+from app.api.endpoints import walkability
+
 
 api_router = APIRouter()
 
-# 기존 라우터들...
-
-# 날씨 API 라우터 추가
-api_router.include_router(weather.router, prefix="/weather", tags=["weather"])
+api_router.include_router(walkability.router, prefix="/walkability", tags=["walkability"])
