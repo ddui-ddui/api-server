@@ -45,7 +45,7 @@ class WalkabilityCalculator:
         
         # 최종 점수 계산 (0-100 범위로 제한)
         walkability_score = round(max(0, min(100, base_score - total_deduction)))
-        walkability_grade = walkability_score // 20 + 1  # 1-5 등급으로 변환
+        walkability_grade = 5 - min(4, walkability_score // 20)
         return {
             "walkability_score": walkability_score,
             "walkability_grade": walkability_grade,
