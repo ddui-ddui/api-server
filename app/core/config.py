@@ -1,18 +1,22 @@
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    """Application settings."""
-
     # API
     API_V1_URL: str = "/api/v1"
     PROJECT_NAME: str = "DDUI DDUI API Server"
-    
-    DEBUG: bool = False
-    SSL_VERIFY: bool = True
 
     # Server Info
     HOST: str = "127.0.0.1"
     PORT: int = 3500
+    WORKERS: int = 1
+    TIMEOUT: int = 30
+    RELOAD: bool = False
+    
+    # Logging
+    LOG_LEVEL: str = "info"
+
+    # SSL
+    SSL_VERIFY: bool = True
 
     # GOV API INFO
     GOV_DATA_API_KEY: str = ""

@@ -342,7 +342,7 @@ async def get_daily_temperature_range(nx: float, ny: float) -> Dict[str, Any]:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"날씨 데이터 처리 오류: {str(e)}")
     
-async def get_week_forecast(lat: float, lon: float) -> Dict[str, Any]:
+async def get_weekly_forecast(lat: float, lon: float, days: int = 7) -> Dict[str, Any]:
     """
     내일부터 일주일간의 날씨 예보 조회 (수정된 버전)
     :param lat: 위도

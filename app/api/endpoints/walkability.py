@@ -1,12 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import Any, Dict
-from app.services.walkability_service import get_walkability_houly
-
-from app.models.walkability import WalkabilityRequest
+from app.services.walkability_service import get_walkability_hourly as service_get_hourly, get_walkability_weekly as service_get_weekly
+from app.models.response import success_response, error_response
 
 router = APIRouter()
 
-@router.get("/walkability/hourly")
+@router.get("/hourly")
 async def get_walkability_hourly (
     lat: float = Query(37.5665, description="위도"),
     lon: float = Query(126.9780, description="경도"),
@@ -25,9 +24,31 @@ async def get_walkability_hourly (
     :return: 현재 날씨 정보
     """
     try:
-        walkability = await get_walkability_houly(lat, lon, region, hours, dog_size, sensitivities, air_quality_type)
-        return walkability
-    except HTTPException as e:
-        raise e
+        walkability = await service_get_hourly(lat, lon, region, hours, dog_size, sensitivities, air_quality_type)
+        return success_response(data=walkability)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"서버 오류: {str(e)}")
+        raise error_response(500, f"서버 오류: {str(e)}")
+
+@router.get("/weekly")
+async def get_walkability_weekly (
+    lat: float = Query(37.5665, description="위도"),
+    lon: float = Query(126.9780, description="경도"),
+    region: str = Query("서울", description="지역명"),
+    days: int = Query(7, description="일자 (1~7)", ge=1, le=7),
+    dog_size: str = Query("medium", description="견종 크기 (small/medium/large)"),
+    sensitivities: str = Query("", description="민감군 목록 (쉼표로 구분)"),
+    air_quality_type: str = Query("korean", description="대기질 기준 (korean/who)"),
+    ) -> Dict[str, Any]:
+    """
+    현재 날씨 정보 조회
+    :param lat: 위도
+    :param lon: 경도
+    :param region: 지역명
+    :param days: 일자 (1~7)
+    :return: 현재 날씨 정보
+    """
+    try:
+        walkability = await service_get_weekly(lat, lon, region, days, dog_size, sensitivities, air_quality_type)
+        return success_response(data=walkability)
+    except Exception as e:
+        raise error_response(500, f"서버 오류: {str(e)}")
