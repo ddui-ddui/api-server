@@ -184,8 +184,6 @@ async def get_hourly_forecast(lat: float, lon: float, hours: int = 12) -> Dict[s
             
             if category == "TMP":  # 기온
                 forecasts_by_time[key]["temperature"] = float(value)
-            elif category == "POP":  # 강수확률
-                forecasts_by_time[key]["precipitation_probability"] = int(value)
             elif category == "PTY":  # 강수형태 (0:없음, 1:비, 2:비/눈, 3:눈, 4:소나기)
                 forecasts_by_time[key]["precipitation_type"] = int(value)
             elif category == "SKY":  # 하늘상태 (1:맑음, 3:구름많음, 4:흐림)
@@ -208,7 +206,7 @@ async def get_hourly_forecast(lat: float, lon: float, hours: int = 12) -> Dict[s
         for key in sorted_keys:
             forecast = forecasts_by_time[key]
             # 필수 필드 확인
-            required_fields = ["temperature", "sky_condition", "precipitation_type", "precipitation_probability"]
+            required_fields = ["temperature", "sky_condition", "precipitation_type"]
         
             if all(field in forecast for field in required_fields):
                 # 날짜 형식 정리
@@ -355,8 +353,6 @@ async def get_weekly_forecast(lat: float, lon: float, days: int = 7) -> Dict[str
     # 현재 시간 기준
     now = datetime.now()
     today = now.date()
-    tomorrow = today + timedelta(days=1)
-    tomorrow_str = tomorrow.strftime("%Y%m%d")
     
     # 단기예보 API로 데이터 가져오기 (최대 5일)
     short_forecasts = await get_short_range_forecast(nx, ny)
@@ -375,7 +371,7 @@ async def get_weekly_forecast(lat: float, lon: float, days: int = 7) -> Dict[str
         target_date_str = target_date.strftime("%Y%m%d")
         
         # 해당 날짜의 시간별 예보 추출
-        day_forecasts = [f for f in short_forecasts if f.get("forecast_date") == target_date_str]
+        day_forecasts = [f for f in short_forecasts if f.get("base_date") == target_date_str]
         
         if day_forecasts:
             # 온도 정보 찾기
@@ -385,13 +381,13 @@ async def get_weekly_forecast(lat: float, lon: float, days: int = 7) -> Dict[str
             
             # 대표 시간대 찾기 (낮 시간대 중에서)
             noon_time = "1200"
-            noon_forecast = next((f for f in day_forecasts if f.get("forecast_time") == noon_time), None)
+            noon_forecast = next((f for f in day_forecasts if f.get("base_time") == noon_time), None)
             
             if noon_forecast is None and day_forecasts:
                 # 정오 데이터가 없으면 낮 시간대 중 하나 선택
                 daytime_forecasts = [f for f in day_forecasts if 
-                                    f.get("forecast_time") >= "0900" and 
-                                    f.get("forecast_time") <= "1800"]
+                                    f.get("base_time") >= "0900" and 
+                                    f.get("base_time") <= "1800"]
                 if daytime_forecasts:
                     noon_forecast = daytime_forecasts[len(daytime_forecasts)//2]  # 중간값
                 else:
@@ -404,7 +400,7 @@ async def get_weekly_forecast(lat: float, lon: float, days: int = 7) -> Dict[str
                 precipitation_type = noon_forecast.get("precipitation_type", 0)
                 
                 day_summary = {
-                    "date": f"{target_date_str[:4]}-{target_date_str[4:6]}-{target_date_str[6:]}",
+                    "base_date": target_date_str,
                     "min_temperature": min_temp,
                     "max_temperature": max_temp,
                     "sky_condition": sky_condition,
@@ -422,17 +418,17 @@ async def get_weekly_forecast(lat: float, lon: float, days: int = 7) -> Dict[str
         target_date_str = target_date.strftime("%Y-%m-%d")
         
         # 이미 단기예보에서 추가한 날짜인지 확인
-        existing_day = next((d for d in weekly_forecast if d.get("date") == target_date_str), None)
+        existing_day = next((d for d in weekly_forecast if d.get("base_date") == target_date_str), None)
         
         # 중복 날짜가 아니고, 중기예보에 해당 날짜 데이터가 있는 경우
         if not existing_day:
             # 중기예보에서 해당 날짜 찾기
-            day_forecast = next((f for f in mid_forecasts if f.get("date") == target_date_str), None)
+            day_forecast = next((f for f in mid_forecasts if f.get("base_date") == target_date_str), None)
             
             if day_forecast:
                 # 중기예보와 단기예보의 형식을 일치시킴
                 normalized_forecast = {
-                    "date": day_forecast.get("date", ""),
+                    "base_date": day_forecast.get("base_date", ""),
                     "min_temperature": day_forecast.get("min_temperature", 0),
                     "max_temperature": day_forecast.get("max_temperature", 0),
                     "sky_condition": day_forecast.get("sky_condition", 0),
@@ -441,19 +437,10 @@ async def get_weekly_forecast(lat: float, lon: float, days: int = 7) -> Dict[str
                 weekly_forecast.append(normalized_forecast)
     
     # 날짜순 정렬
-    weekly_forecast.sort(key=lambda x: x["date"])
+    weekly_forecast.sort(key=lambda x: x["base_date"])
+    weekly_forecast = weekly_forecast[:days]
     
-    # 결과 반환 - 최대 7일까지만
-    weekly_forecast = weekly_forecast[:7]
-    end_date = weekly_forecast[-1]["date"] if weekly_forecast else tomorrow.strftime("%Y-%m-%d")
-    
-    result = {
-        "start_date": f"{tomorrow_str[:4]}-{tomorrow_str[4:6]}-{tomorrow_str[6:]}",
-        "end_date": end_date,
-        "forecasts": weekly_forecast
-    }
-    
-    return result
+    return {'forecasts': weekly_forecast}
 
 # 단기예보(주간예보용)
 async def get_short_range_forecast(nx: int, ny: int) -> List[Dict[str, Any]]:
@@ -509,15 +496,14 @@ async def get_short_range_forecast(nx: int, ny: int) -> List[Dict[str, Any]]:
         
         if key not in forecasts_by_time:
             forecasts_by_time[key] = {
-                "forecast_date": fcst_date,
-                "forecast_time": fcst_time,
-                "forecast_time_formatted": f"{fcst_date[:4]}-{fcst_date[4:6]}-{fcst_date[6:]} {fcst_time[:2]}:{fcst_time[2:]}"
+                "base_date": fcst_date,
+                "base_time": fcst_time
             }
         
         # 값 처리
         category = item.get("category")
         value = item.get("fcstValue")
-        
+        print(category)
         # 각 카테고리 처리
         if category == "TMP":  # 기온
             forecasts_by_time[key]["temperature"] = float(value)
@@ -525,24 +511,8 @@ async def get_short_range_forecast(nx: int, ny: int) -> List[Dict[str, Any]]:
             forecasts_by_time[key]["precipitation_probability"] = int(value)
         elif category == "PTY":  # 강수형태
             forecasts_by_time[key]["precipitation_type"] = int(value)
-        elif category == "PCP":  # 1시간 강수량
-            if value == "강수없음":
-                forecasts_by_time[key]["rainfall"] = 0.0
-            elif "미만" in value:
-                forecasts_by_time[key]["rainfall"] = 0.1
-            else:
-                try:
-                    forecasts_by_time[key]["rainfall"] = float(value.replace("mm", ""))
-                except ValueError:
-                    forecasts_by_time[key]["rainfall"] = 0.0
-        elif category == "REH":  # 습도
-            forecasts_by_time[key]["humidity"] = int(value)
         elif category == "SKY":  # 하늘상태
             forecasts_by_time[key]["sky_condition"] = int(value)
-        elif category == "WSD":  # 풍속
-            forecasts_by_time[key]["wind_speed"] = float(value)
-        elif category == "VEC":  # 풍향
-            forecasts_by_time[key]["wind_direction"] = int(value)
     
     return list(forecasts_by_time.values())
 
@@ -615,7 +585,7 @@ async def get_mid_range_forecast(nx: int, ny: int) -> List[Dict[str, Any]]:
     # 3일 후부터 7일 후까지 데이터 처리
     for i in range(mid_start_day, 11):
         forecast_date = start_date + timedelta(days=i-2)  # 실제 날짜로 변환 (3일 후부터)
-        date_str = forecast_date.strftime("%Y-%m-%d")
+        date_str = forecast_date.strftime("%Y%m%d")
 
         # 중기예보 데이터 키 (i는 원래 키 값 그대로 사용)
         min_key = f"taMin{i}"
@@ -631,10 +601,11 @@ async def get_mid_range_forecast(nx: int, ny: int) -> List[Dict[str, Any]]:
         if min_key not in temp_item or max_key not in temp_item or sky_key not in weather_item:
             continue
         
+        print(weather_item)
         weather_info = convert_weather_condition(weather_item.get(sky_key))
         
         day_forecast = {
-            "date": date_str,
+            "base_date": date_str,
             "min_temperature": float(temp_item.get(min_key, 0)),
             "max_temperature": float(temp_item.get(max_key, 0)),
             "sky_condition": weather_info["sky_condition"],

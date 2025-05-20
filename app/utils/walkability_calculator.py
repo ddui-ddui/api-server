@@ -27,7 +27,6 @@ class WalkabilityCalculator:
                                    pm25_grade: int,
                                    pm25_value: int,
                                    precipitation_type: int, 
-                                   precipitation_probability: float,
                                    sky_condition: int,
                                    dog_size: str = "medium",
                                    air_quality_type: str = "korean") -> Dict[str, Any]:

@@ -54,6 +54,5 @@ async def make_request(
             response = await client.delete(url, params=params, headers=headers)
         else:
             raise ValueError(f"Unsupported HTTP method: {method}")
-            
-        response.raise_for_status()
+    
         return response
