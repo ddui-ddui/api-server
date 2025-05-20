@@ -87,9 +87,6 @@ async def get_walkability_hourly(
             }
             
         # 산책 적합도 점수 계산
-        # TODO
-        # 현재 walkability_calculator가 기온을 하나만 받고 있음 이 부분 수정 필요하며
-        # 주간별 예보 마지막 작업임
         try:
             walkability_data = walkability_calculator.calculate_walkability_score(
                 temperature=combined_data["weather"]["temperature"],
@@ -146,10 +143,8 @@ async def get_walkability_weekly(
         raise HTTPException(status_code=404, detail="날씨 정보를 찾을 수 없습니다.")
     
     # 시간별 대기질 정보 조회
-    # 대기질 정보는 하루에 4번 제공함 
-    # 그래서 데이터가 시간별이라기 보단 오전 오후 데이터라고 보면 편함
     airquality_data = await get_weekly_air_quality(region, air_quality_type, days)
-
+    
     weather_forecasts = weather_data.get("forecasts", [])
     air_forecasts = airquality_data.get("forecasts", [])
     
@@ -159,7 +154,6 @@ async def get_walkability_weekly(
         air_forecast_map[key] = air_forecast
     
     combined_forecasts = []
-    
     
     for weather in weather_forecasts:
         base_date = weather.get("base_date", "")
@@ -171,44 +165,50 @@ async def get_walkability_weekly(
         air_quality = air_forecast_map.get(key, None)
         
         # 산책지수 데이터 생성
+        min_temperature = weather.get("min_temperature")
+        max_temperature = weather.get("max_temperature")
         combined_data = {
             "base_date": base_date,
             "weather": {
-                "min_temperature": weather.get("min_temperature"),
-                "max_temperature": weather.get("max_temperature"),
+                "min_temperature": min_temperature,
+                "max_temperature": max_temperature,
                 "sky_condition": weather.get("sky_condition"),
                 "precipitation_type": weather.get("precipitation_type")
             }
         }
         
         # 대기질 정보 추가
+        air_quality_score = air_quality.get("air_quality_score")
         if air_quality:    
             combined_data["air_quality"] = {
-                    "air_quality_score": air_quality.get("air_quality_score")
+                    "air_quality_score": air_quality_score
             }
         
         # 산책 적합도 점수 계산
-        # try:
-        #     walkability_data = walkability_calculator.calculate_walkability_score(
-        #         temperature=combined_data["weather"]["temperature"],
-        #         pm10_grade=combined_data["air_quality"]["pm10_grade"],
-        #         pm10_value=0,
-        #         pm25_grade=combined_data["air_quality"]["pm25_grade"],
-        #         pm25_value=0,
-        #         precipitation_type=combined_data["weather"]["precipitation_type"],
-        #         sky_condition=combined_data["weather"]["sky_condition"],
-        #         dog_size=dog_size,
-        #         air_quality_type=air_quality_type
-        #     )
-        #     combined_data["walkability"] = {
-        #         "score": walkability_data.get("walkability_score"),
-        #         "grade": walkability_data.get("walkability_grade")
-        #     }
-        # except Exception as e:
-        #     print(f"산책 적합도 점수 계산 실패: {str(e)}")
-        #     combined_data["walkability_score"] = {
-        #         "score": 50  # 중간 값으로 기본 설정
-        #     }
+        # 최저 최고 기온에 따라 산책 적합도 산출
+        try:
+            min_temp_result = _walkability_calculator(
+                min_temperature, 
+                0, 0, air_quality_score, 0,
+                combined_data["weather"], 
+                dog_size, 
+                air_quality_type)
+            max_temp_result = _walkability_calculator(
+                max_temperature, 
+                0, 0, air_quality_score, 0,
+                combined_data["weather"], 
+                dog_size, 
+                air_quality_type)
+
+            combined_data["walkability"] = {
+                'low': min_temp_result,
+                'high': max_temp_result
+            }
+        except Exception as e:
+            print(f"산책 적합도 점수 계산 실패: {str(e)}")
+            combined_data["walkability_score"] = {
+                "score": 50  # 중간 값으로 기본 설정
+            }
        
         combined_forecasts.append(combined_data)
         
@@ -217,3 +217,26 @@ async def get_walkability_weekly(
     }
     
     return result
+
+
+def _walkability_calculator(
+    temperature: float,
+    pm10_grade: int,
+    pm10_value: int,
+    pm25_grade: int,
+    pm25_value: int,
+    weather_data: Dict[str, Any],
+    dog_size: str = "medium",
+    air_quality_type: str = "korean"
+    ) -> Dict[str, Any]:        
+        return walkability_calculator.calculate_walkability_score(
+            temperature=temperature,
+            pm10_grade=pm10_grade,
+            pm10_value=pm10_value,
+            pm25_grade=pm25_grade,
+            pm25_value=pm25_value,
+            precipitation_type=weather_data.get("precipitation_type"),
+            sky_condition=weather_data.get("sky_condition"),
+            dog_size=dog_size,
+            air_quality_type=air_quality_type
+        )

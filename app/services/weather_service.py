@@ -415,11 +415,11 @@ async def get_weekly_forecast(lat: float, lon: float, days: int = 7) -> Dict[str
     
     for i in range(mid_start_day, 8):  # 최대 7일까지만 (내일부터 7일)
         target_date = today + timedelta(days=i)
-        target_date_str = target_date.strftime("%Y-%m-%d")
+        target_date_str = target_date.strftime("%Y%m%d")
         
         # 이미 단기예보에서 추가한 날짜인지 확인
         existing_day = next((d for d in weekly_forecast if d.get("base_date") == target_date_str), None)
-        
+
         # 중복 날짜가 아니고, 중기예보에 해당 날짜 데이터가 있는 경우
         if not existing_day:
             # 중기예보에서 해당 날짜 찾기
@@ -503,7 +503,6 @@ async def get_short_range_forecast(nx: int, ny: int) -> List[Dict[str, Any]]:
         # 값 처리
         category = item.get("category")
         value = item.get("fcstValue")
-        print(category)
         # 각 카테고리 처리
         if category == "TMP":  # 기온
             forecasts_by_time[key]["temperature"] = float(value)
@@ -518,7 +517,7 @@ async def get_short_range_forecast(nx: int, ny: int) -> List[Dict[str, Any]]:
 
 # 중기예보
 async def get_mid_range_forecast(nx: int, ny: int) -> List[Dict[str, Any]]:
-    """중기예보 API로 3~7일 후 예보 조회 - 간소화 버전"""
+    """중기예보 API로 3~7일 후 예보 조회 """
     # 현재 시간
     now = datetime.now()
     today = now.strftime("%Y%m%d")
@@ -601,7 +600,6 @@ async def get_mid_range_forecast(nx: int, ny: int) -> List[Dict[str, Any]]:
         if min_key not in temp_item or max_key not in temp_item or sky_key not in weather_item:
             continue
         
-        print(weather_item)
         weather_info = convert_weather_condition(weather_item.get(sky_key))
         
         day_forecast = {
