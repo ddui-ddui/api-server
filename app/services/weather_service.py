@@ -7,6 +7,7 @@ from app.utils.convert_for_grid import mapToGrid
 from app.common.http_client import make_request
 from urllib.parse import unquote
 from app.utils.weather_format_utils import get_wind_direction, convert_wind_speed, convert_weather_condition
+from app.utils.convert_for_region import convert_grid_to_region
 from app.services.air_quality import find_nearby_air_quality_station, get_air_quality_data
 
 
@@ -543,8 +544,7 @@ async def get_mid_range_forecast(nx: int, ny: int) -> List[Dict[str, Any]]:
         mid_start_day = 5
     
     # 위경도를 행정구역코드로 변환
-    #TODO: nx, ny를 행정구역코드로 변환하는 로직 추가 필요
-    region_id = "11B10101"  # 서울 강남구
+    region_id = convert_grid_to_region(nx, ny)
     
     # 두 API 동시 요청 준비
     temp_url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_WEATHER_MID_OUTLOOK_URL}"
