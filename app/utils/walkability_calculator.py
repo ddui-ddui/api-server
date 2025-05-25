@@ -2,7 +2,7 @@ import json
 import os
 from typing import Dict, List, Any, Union, Tuple
 from app.utils.temperature_calculator import calculate_temperature_score
-from app.utils.airquality_calculator import calculate_air_quality_score
+from app.utils.airquality_calculator import calculate_air_quality_score_avg
 
 class WalkabilityCalculator:
     def __init__(self):
@@ -37,7 +37,7 @@ class WalkabilityCalculator:
         temp_deduction = self._convert_score_to_deduction(temp_score, max_deduction=40)
         
         # 대기질 계산
-        air_quality_score = calculate_air_quality_score(pm10_grade, pm10_value, pm25_grade, pm25_value, air_quality_type)
+        air_quality_score = calculate_air_quality_score_avg(pm10_grade, pm10_value, pm25_grade, pm25_value, air_quality_type)
         air_deduction = self._convert_score_to_deduction(air_quality_score, max_deduction=30)
         
         total_deduction = temp_deduction + air_deduction

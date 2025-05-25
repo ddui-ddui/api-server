@@ -1,13 +1,34 @@
 from typing import Any, Dict
 
 from fastapi import HTTPException
-from app.services.weather_service import get_hourly_forecast, get_weekly_forecast
-from app.services.air_quality import get_hourly_air_quality, get_weekly_air_quality
+from app.services.weather_service import get_ultra_short_forecast, get_hourly_forecast, get_weekly_forecast
+from app.services.air_quality import get_current_air_quality, get_hourly_air_quality, get_weekly_air_quality
 from app.utils.walkability_calculator import WalkabilityCalculator
-from app.utils.airquality_calculator import calculate_air_quality_score
+from app.utils.airquality_calculator import calculate_air_quality_score_avg
 
 # 산책 적합도 계산기
 walkability_calculator = WalkabilityCalculator()
+async def get_walkability_current(
+    lat: float, 
+    lon: float, 
+    dog_size: str = "medium", 
+    sensitive_groups: list = None,
+    air_quality_type: str = "korean") -> Dict[str, Any]:
+    
+    results = {}
+    # 현재 날씨 조회
+    weather_data = await get_ultra_short_forecast(lat, lon)
+    if not weather_data:
+        raise HTTPException(status_code=404, detail="날씨 정보를 찾을 수 없습니다.")
+    results["weather"] = weather_data
+    
+    # 현재 대기질 정보 조회
+    air_quality_data = await get_current_air_quality(lat, lon, air_quality_type)
+    if not air_quality_data:
+        raise HTTPException(status_code=404, detail="대기질 정보를 찾을 수 없습니다.")
+    results["air_quality"] = air_quality_data
+    
+    return {"forecasts": results}
 
 async def get_walkability_hourly(
     lat: float, 
@@ -117,7 +138,6 @@ async def get_walkability_hourly(
     
     return result
 
-
 async def get_walkability_weekly(
     lat: float, 
     lon: float, 
@@ -217,7 +237,6 @@ async def get_walkability_weekly(
     }
     
     return result
-
 
 def _walkability_calculator(
     temperature: float,

@@ -7,9 +7,10 @@ from app.utils.convert_for_tm import convert_wgs84_to_katec
 from app.core.config import settings
 from urllib.parse import unquote
 from app.common.http_client import make_request
+from app.utils.airquality_calculator import calculate_air_quality_score
 
 
-async def get_air_quality_current(lat: float, lon: float) -> Optional[Dict[str, Any]]:
+async def get_current_air_quality(lat: float, lon: float, air_quality_type: str = 'korean') -> Dict[str, Any]:
     """
     현재 공기질 정보 조회
     :param lat: 위도
@@ -25,9 +26,10 @@ async def get_air_quality_current(lat: float, lon: float) -> Optional[Dict[str, 
     
     # 측정소명
     station_name = station.get("stationName", "")
+    print(f"측정소명: {station_name}")
     
-    # 미세먼지 데이터 조회
-    air_quality_data = await get_air_quality_data(station_name)
+    # 실시간 미세먼지 데이터 조회
+    air_quality_data = await get_air_quality_data(station_name, air_quality_type)
     
     return air_quality_data
 
@@ -58,17 +60,18 @@ async def find_nearby_air_quality_station(lat: float, lon: float) -> Optional[Di
         if not items:
             return None
         
-        # 가장 가까운 측정소 (첫 번째 항목)
+        # 가장 가까운 측정소
         return items[0]
     
     except Exception as e:
         print(f"측정소 조회 오류: {str(e)}")
         return None
 
-async def get_air_quality_data(station_name: str) -> List[Dict[str, Any]]:
+async def get_air_quality_data(station_name: str, air_quality_type: str = 'korean') -> Dict[str, Any]:
     """
     측정소명으로 미세먼지 데이터 조회
     :param station_name: 측정소명
+    :param air_quality_type: 대기질 기준 (korean/who)
     :return: 미세먼지 데이터 리스트
     """
     # 미세먼지 API URL
@@ -91,67 +94,80 @@ async def get_air_quality_data(station_name: str) -> List[Dict[str, Any]]:
         # 응답 확인
         items = data.get("response", {}).get("body", {}).get("items", [])
         
-        # if not items:
-        #     return []
+        if not items:
+            return []
         
-        # 데이터 정리
-        result = []
-        # for item in items:
-        #     # 측정 시간
-        #     datatime = item.get("dataTime", "")
-        #     if not datatime:
-        #         continue
-                
-        #     try:
-        #         measure_dt = datetime.strptime(datatime, "%Y-%m-%d %H:%M")
-        #     except ValueError:
-        #         continue
-                
-        #     # 미세먼지(PM10)
-        #     pm10_str = item.get("pm10Value", "")
-        #     try:
-        #         pm10 = int(pm10_str) if pm10_str and pm10_str != "-" else 0
-        #     except ValueError:
-        #         pm10 = 0
-                
-        #     # 초미세먼지(PM2.5)
-        #     pm25_str = item.get("pm25Value", "")
-        #     try:
-        #         pm25 = int(pm25_str) if pm25_str and pm25_str != "-" else 0
-        #     except ValueError:
-        #         pm25 = 0
-                
-        #     # 통합 대기질 등급
-        #     # khaiGrade: 통합대기환경지수 등급 (1:좋음, 2:보통, 3:나쁨, 4:매우나쁨)
-        #     khai_grade = item.get("khaiGrade", "")
-        #     try:
-        #         air_quality_grade = int(khai_grade) if khai_grade and khai_grade != "-" else 0
-        #     except ValueError:
-        #         air_quality_grade = 0
-                
-        #     air_quality_status = "정보없음"
-        #     if air_quality_grade == 1:
-        #         air_quality_status = "좋음"
-        #     elif air_quality_grade == 2:
-        #         air_quality_status = "보통"
-        #     elif air_quality_grade == 3:
-        #         air_quality_status = "나쁨"
-        #     elif air_quality_grade == 4:
-        #         air_quality_status = "매우나쁨"
-                
-            # result.append({
-            #     "datetime": measure_dt,
-            #     "pm10": pm10,
-            #     "pm25": pm25,
-            #     "air_quality_grade": air_quality_grade,
-            #     "air_quality_status": air_quality_status
-            # })
+        now = datetime.now()
+        current_hour = now.hour
+        today = now.date().strftime("%Y-%m-%d")
+        target_datetime = f"{today} {current_hour:02d}:00"
+        
+        closest_item = None
+        min_time_diff = float('inf')
+        results = {}
+        for item in items:
+            # 측정 시간
+            datatime = item.get("dataTime", "")
+            if not datatime:
+                continue
             
-        return result
+            try:
+                measure_dt = datetime.strptime(datatime, "%Y-%m-%d %H:%M")
+                
+                # 정확히 일치하는 시간이 있으면 바로 반환
+                if datatime == target_datetime:
+                    closest_item = item
+                    break
+                
+                # 가장 가까운 시간 찾기
+                time_diff = abs((now - measure_dt).total_seconds())
+                if time_diff < min_time_diff:
+                    
+                    # 통신 장애 확인
+                    # 장애 시 과거 데이터로 대체
+                    pm10_str = item.get("pm10Value", "")
+                    pm25_str = item.get("pm25Value", "")
+                    
+                    pm10_valid = pm10_str and pm10_str != "-"
+                    pm25_valid = pm25_str and pm25_str != "-"
+
+                    if pm10_valid and pm25_valid:
+                        min_time_diff = time_diff
+                        closest_item = item
+            except ValueError:
+                continue
+            
+        if not closest_item:
+            return []
+        
+        # 미세먼지 데이터
+        pm10_str = item.get("pm10Value", "")
+        pm25_str = item.get("pm25Value", "")
+        
+        try:
+            pm10 = int(pm10_str) if pm10_str and pm10_str != "-" else 0
+        except ValueError:
+            pm10 = 0
+
+        try:
+            pm25 = int(pm25_str) if pm25_str and pm25_str != "-" else 0
+        except ValueError:
+            pm25 = 0
+        
+        pm10_grade, pm25_grade = calculate_air_quality_score(pm10, pm25, air_quality_type)
+        
+        results = {
+            "pm10": pm10,
+            "pm10_grade": pm10_grade,
+            "pm25": pm25,
+            "pm25_grade": pm25_grade,
+        }
+            
+        return results
         
     except Exception as e:
         print(f"미세먼지 데이터 조회 오류: {str(e)}")
-        return []
+        raise HTTPException(status_code=500, detail=f"미세먼지 데이터 조회 오류: {str(e)}")
     
 
 async def get_hourly_air_quality(region: str, hours: int = 12) -> Dict[str, Any]:
