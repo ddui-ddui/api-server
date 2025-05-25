@@ -80,10 +80,11 @@ async def get_air_quality_data(station_name: str, air_quality_type: str = 'korea
     params = {
         "serviceKey": unquote(settings.GOV_DATA_API_KEY),
         "returnType": "json",
+        "numOfRows": 1000,
+        "pageNo": 1,
         "stationName": station_name,
         "dataTerm": "DAILY",
-        "ver": "1.2",
-        "numOfRows": 1000
+        "ver": "1.2"
     }
     
     try:

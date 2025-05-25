@@ -9,12 +9,12 @@ from urllib.parse import unquote
 from app.utils.weather_format_utils import get_wind_direction, convert_wind_speed, convert_weather_condition
 from app.utils.convert_for_region import convert_grid_to_region
 
-async def get_previous_weather(lat: float, lon: float, current_date: str, current_time: str) -> Dict[str, Any]:
+async def get_previous_weather(lat: float, lon: float, current_date: str, current_time: str) -> float:
     """
     이전 날씨 정보 조회
     :param lat: 위도
     :param lon: 경도
-    :param current_datetime: 기준 시간 (지정하지 않으면 현재 시간 사용)
+    :param current_datetime: 기준 시간
     :return: 이전 날씨 정보
     """
     nx, ny = mapToGrid(lat, lon)
@@ -25,7 +25,7 @@ async def get_previous_weather(lat: float, lon: float, current_date: str, curren
     # 2. 관측소 코드로 이전 날씨 정보 조회
     prev_date = (datetime.strptime(current_date, "%Y%m%d") - timedelta(days=1)).strftime("%Y-%m-%d")
     prev_time = (datetime.strptime(current_time, "%H%M")).strftime("%H:%M")
-    temperature = await get_prev_weather(stationId, prev_date, prev_time)
+    return await get_prev_weather(stationId, prev_date, prev_time)
     
      
 
@@ -94,11 +94,15 @@ async def get_ultra_short_forecast(lat: float, lon: float) -> Dict[str, Any]:
 
             daily_temperature = await get_daily_temperature_range(nx, ny)
             
-            # 전날 날씨 데이터 조회
+            # 전날 날씨 데이터 조회 및 기온 차이 계산
             prev_weather = await get_previous_weather(lat, lon, base_date, base_time)
-            
+            current_temperature = float(weather_data.get("T1H", 0))
+            diff_temperature = round(current_temperature - prev_weather, 1)
+
             result = {
-                "temperature": float(weather_data.get("T1H", 0)),
+                "temperature": current_temperature,
+                "prev_temperature": prev_weather,
+                "temperature_difference": diff_temperature,
                 "sky_condition": int(weather_data.get("SKY", 0)),
                 "precipitation_type": int(weather_data.get("PTY", 0)),
                 "min_temperature": float(daily_temperature.get("min_temperature", 0)),
@@ -656,7 +660,7 @@ async def get_weather_station(nx: str, ny: str) -> int:
         print(f"어제 온도 조회 오류: {str(e)}")
         return {"yesterday_temp": None, "temp_diff": None}
 
-async def get_prev_weather(station_id: int, prev_date: str, prev_time: str) -> int:
+async def get_prev_weather(station_id: int, prev_date: str, prev_time: str) -> float:
     """
     어제 날씨 정보 조회
     :param station_id: 관측소 ID
@@ -666,7 +670,6 @@ async def get_prev_weather(station_id: int, prev_date: str, prev_time: str) -> i
     """
     prev_datetime = prev_date + " " + prev_time
     params_date = prev_date.replace("-", "")
-    print(prev_date)
     params = {
         "serviceKey": unquote(settings.GOV_DATA_API_KEY),
         "numOfRows": 24, # 최대 24시간 데이터
@@ -685,8 +688,7 @@ async def get_prev_weather(station_id: int, prev_date: str, prev_time: str) -> i
         response = await make_request(url=url, params=params)
         response.raise_for_status()
         data = response.json()
-        print(data)
-        return 0
+
         response_code = data.get("response", {}).get("header", {}).get("resultCode")
         if response_code != "00":
             response_msg = data.get("response", {}).get("header", {}).get("resultMsg", "Unknown error")
@@ -695,11 +697,15 @@ async def get_prev_weather(station_id: int, prev_date: str, prev_time: str) -> i
         if not items:
             raise HTTPException(status_code=404, detail="관측소 정보를 찾을 수 없습니다.")
         
+        yesterday_temp = None
         for item in items:
             if item.get("tm") == prev_datetime:
-                print(item)
+                yesterday_temp = float(item.get("ta", 0))
+                break
         
-        return 0
+        if yesterday_temp is None:
+            return float(items[0].get("ta", 0))
+        return yesterday_temp
     except httpx.HTTPStatusError as e:
         print(f"기상청 API 오류: {e.response.text}")
         return {"yesterday_temp": None, "temp_diff": None}

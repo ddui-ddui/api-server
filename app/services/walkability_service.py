@@ -97,7 +97,7 @@ async def get_walkability_hourly(
             combined_data["air_quality"] = {
                 "pm10_grade": pm10_grade,
                 "pm25_grade": pm25_grade,
-                "air_quality_score": calculate_air_quality_score(pm10_grade, 0, pm25_grade, 0, air_quality_type),
+                "air_quality_score": calculate_air_quality_score_avg(pm10_grade, 0, pm25_grade, 0, air_quality_type),
             }
         else:
             # 대기질 정보가 없는 경우 기본값 사용
