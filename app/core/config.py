@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     GOV_DATA_WEATHER_MID_LAND_URL: str = ""
     GOV_DATA_WEATHER_SEARCH_AREA_URL: str = ""
     GOV_DATA_WEATHER_SEARCH_PREV_URL: str = ""
+
+    # Astronomy API URL
+    GOV_DATA_ASTRONOMY_SUN_URL: str = ""
     
     # Air Quality API URL
     GOV_DATA_AIRQUALITY_NEARSATIONS_URL: str = ""

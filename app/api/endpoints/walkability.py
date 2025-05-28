@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import Any, Dict
-from app.services.walkability_service import get_walkability_current as service_get_current, get_walkability_hourly as service_get_hourly, get_walkability_weekly as service_get_weekly
+from app.services.walkability_service import get_walkability_current as service_get_current, get_walkability_hourly as service_get_hourly, get_walkability_weekly as service_get_weekly, get_walkability_current_detail as service_get_current_detail
 from app.models.response import success_response, error_response
 
 router = APIRouter()
@@ -72,6 +72,23 @@ async def get_walkability_weekly (
     """
     try:
         walkability = await service_get_weekly(lat, lon, region, days, dog_size, sensitivities, air_quality_type)
+        return success_response(data=walkability)
+    except Exception as e:
+        raise error_response(500, f"서버 오류: {str(e)}")
+    
+@router.get("/current/detail")
+async def get_walkability_current_detail (
+    lat: float = Query(37.6419399, description="위도"),
+    lon: float = Query(127.0170059, description="경도")
+    ) -> Dict[str, Any]:
+    """
+    현재 날씨 정보 조회
+    :param lat: 위도
+    :param lon: 경도
+    :return: 현재 날씨 상세 정보
+    """
+    try:
+        walkability = await service_get_current_detail(lat, lon)
         return success_response(data=walkability)
     except Exception as e:
         raise error_response(500, f"서버 오류: {str(e)}")

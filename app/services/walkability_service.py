@@ -2,6 +2,7 @@ from typing import Any, Dict
 
 from fastapi import HTTPException
 from app.services.weather_service import get_ultra_short_forecast, get_hourly_forecast, get_weekly_forecast
+from app.services.astronomy_service import get_sunrise_sunset
 from app.services.air_quality import get_current_air_quality, get_hourly_air_quality, get_weekly_air_quality
 from app.utils.walkability_calculator import WalkabilityCalculator
 from app.utils.airquality_calculator import calculate_air_quality_score_avg
@@ -17,7 +18,8 @@ async def get_walkability_current(
     
     results = {}
     # 현재 날씨 조회
-    weather_data = await get_ultra_short_forecast(lat, lon)
+    fields = ["temperature", "precipitation_type", "sky_condition", "min_temperature", "max_temperature", "previous_temperature", "temperature_difference"]
+    weather_data = await get_ultra_short_forecast(lat, lon, fields)
     if not weather_data:
         raise HTTPException(status_code=404, detail="날씨 정보를 찾을 수 없습니다.")
     results["weather"] = weather_data
@@ -237,6 +239,30 @@ async def get_walkability_weekly(
     }
     
     return result
+
+async def get_walkability_current_detail(
+    lat: float, 
+    lon: float) -> Dict[str, Any]:
+    
+    # 현재 날씨 상세 정보 조회
+    fields = ["humidity", "wind_speed", "rainfall"]
+    weather_data = await get_ultra_short_forecast(lat, lon, fields)
+    if not weather_data:
+        raise HTTPException(status_code=404, detail="날씨 정보를 찾을 수 없습니다.")
+
+    # 오늘 일출 일몰 시간 조회
+    astronomy_data = await get_sunrise_sunset(lat, lon)
+
+    weather_data["sunrise"] = astronomy_data["sunrise"]
+    weather_data["sunset"] = astronomy_data["sunset"]
+
+    # 현재 자외선 지수 조회
+    weather_data["uv_index"] = 0
+    
+    results = {
+        "weather": weather_data
+    }
+    return {"forecasts": results}
 
 def _walkability_calculator(
     temperature: float,

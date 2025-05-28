@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from app.utils.convert_for_grid import mapToGrid
 from app.common.http_client import make_request
 from urllib.parse import unquote
-from app.utils.weather_format_utils import get_wind_direction, convert_wind_speed, convert_weather_condition
+from app.utils.weather_format_utils import convert_weather_condition, parse_rainfall
 from app.utils.convert_for_region import convert_grid_to_region
 
 async def get_previous_weather(lat: float, lon: float, current_date: str, current_time: str) -> float:
@@ -29,7 +29,7 @@ async def get_previous_weather(lat: float, lon: float, current_date: str, curren
     
      
 
-async def get_ultra_short_forecast(lat: float, lon: float) -> Dict[str, Any]:
+async def get_ultra_short_forecast(lat: float, lon: float, fields: List[str] = None) -> Dict[str, Any]:
     """
     초단기 예보 조회
     :param nx: 예보지점 X 좌표
@@ -91,24 +91,46 @@ async def get_ultra_short_forecast(lat: float, lon: float) -> Dict[str, Any]:
 
                 if fcst_time == closest_time:
                     weather_data[category] = fcst_value
+        
+            all_data = {
+                "temperature": float(weather_data.get("T1H", 0)),
+                "sky_condition": int(weather_data.get("SKY", 0)),
+                "humidity": int(weather_data.get("REH", 0)),
+                "wind_direction": int(weather_data.get("VEC", 0)),
+                "wind_speed": float(weather_data.get("WSD", 0)),
+                "rainfall": parse_rainfall(weather_data.get("RN1", 0)),
+            }
 
-            daily_temperature = await get_daily_temperature_range(nx, ny)
+            # 최고/최저 기온 조회
+            if fields is None or "min_temperature" in fields or "max_temperature" in fields:
+                daily_temperature = await get_daily_temperature_range(nx, ny)
+                all_data['min_temperature'] = float(daily_temperature.get("min_temperature", 0))
+                all_data['max_temperature'] = float(daily_temperature.get("max_temperature", 0))
             
             # 전날 날씨 데이터 조회 및 기온 차이 계산
-            prev_weather = await get_previous_weather(lat, lon, base_date, base_time)
-            current_temperature = float(weather_data.get("T1H", 0))
-            diff_temperature = round(current_temperature - prev_weather, 1)
+            if fields is None or "previous_temperature" in fields or "temperature_difference" in fields:
+                prev_weather = await get_previous_weather(lat, lon, base_date, base_time)    
 
-            result = {
-                "temperature": current_temperature,
-                "prev_temperature": prev_weather,
-                "temperature_difference": diff_temperature,
-                "sky_condition": int(weather_data.get("SKY", 0)),
-                "precipitation_type": int(weather_data.get("PTY", 0)),
-                "min_temperature": float(daily_temperature.get("min_temperature", 0)),
-                "max_temperature": float(daily_temperature.get("max_temperature", 0)),
-            }
-            return result
+                if prev_weather:
+                    current_temperature = all_data['temperature']
+                    diff_temperature = round(current_temperature - prev_weather, 1)
+                    all_data['prev_weather'] = prev_weather
+                    all_data['temperature_difference'] = diff_temperature
+                
+
+            if fields is None:
+                result = {
+                    "temperature": current_temperature,
+                    "prev_temperature": prev_weather,
+                    "temperature_difference": diff_temperature,
+                    "sky_condition": int(weather_data.get("SKY", 0)),
+                    "precipitation_type": int(weather_data.get("PTY", 0)),
+                    "min_temperature": float(daily_temperature.get("min_temperature", 0)),
+                    "max_temperature": float(daily_temperature.get("max_temperature", 0)),
+                }
+                return result
+            else:
+                return {field: all_data[field] for field in fields if field in all_data}
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=e.response.status_code, detail=f"기상청 API 오류: {e.response.text}")
     except httpx.RequestError as e:
