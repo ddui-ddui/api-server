@@ -8,7 +8,7 @@ from app.core.config import settings
 from urllib.parse import unquote
 from app.common.http_client import make_request
 from app.utils.airquality_calculator import calculate_air_quality_score
-from app.utils.convert_for_region import convert_region_for_airquelity_service
+from app.utils.convert_for_region import convert_lat_lon_for_region
 
 
 async def get_current_air_quality(lat: float, lon: float, air_quality_type: str = 'korean') -> Dict[str, Any]:
@@ -187,7 +187,8 @@ async def get_hourly_air_quality(lat: float, lon: float, hours: int = 12) -> Dic
     param_date = now.strftime("%Y-%m-%d")
     current_hour = now.hour
     current_minute = now.minute
-    region = convert_region_for_airquelity_service(lat, lon)
+    region_data = convert_lat_lon_for_region(lat, lon)
+    region = region_data.get("subregion")
 
     url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_AIRQUALITY_HOURLY_URL}"
     

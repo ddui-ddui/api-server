@@ -7,7 +7,7 @@ from app.utils.convert_for_grid import mapToGrid
 from app.common.http_client import make_request
 from urllib.parse import unquote
 from app.utils.weather_format_utils import convert_weather_condition, parse_rainfall
-from app.utils.convert_for_region import convert_grid_to_region
+from app.utils.convert_for_region import convert_grid_to_region, convert_lat_lon_for_region
 
 async def get_previous_weather(lat: float, lon: float, current_date: str, current_time: str) -> float:
     """
@@ -728,6 +728,80 @@ async def get_prev_weather(station_id: int, prev_date: str, prev_time: str) -> f
         if yesterday_temp is None:
             return float(items[0].get("ta", 0))
         return yesterday_temp
+    except httpx.HTTPStatusError as e:
+        print(f"기상청 API 오류: {e.response.text}")
+        return {"yesterday_temp": None, "temp_diff": None}
+    except httpx.RequestError as e:
+        print(f"기상청 API 연결 오류: {str(e)}")
+        return {"yesterday_temp": None, "temp_diff": None}
+    except Exception as e:
+        print(f"어제 온도 조회 오류: {str(e)}")
+        return {"yesterday_temp": None, "temp_diff": None}
+    
+async def get_weather_uvindex(lat: float, lon: float) -> int:
+    """
+    자외선 지수 조회
+    :param lat: 위도
+    :param lon: 경도
+    :return: 자외선 지수 데이터
+    """
+    now = datetime.now()
+    current_hour = now.hour
+    current_datetime = now.strftime("%Y%m%d%H")
+    region_data = convert_lat_lon_for_region(lat, lon)
+    region_code = region_data.get("region_code")
+    
+    params = {
+        "serviceKey": unquote(settings.GOV_DATA_API_KEY),
+        "pageNo": 1,
+        "numOfRows": 10,
+        "dataType": "JSON",
+        "areaNo": region_code,
+        "time": current_datetime,
+    }
+    
+    url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_WEATHER_LIVING_UV_URL}"
+
+    print(region_code)
+    try:
+        response = await make_request(url=url, params=params)
+        response.raise_for_status()
+        data = response.json()
+
+        response_code = data.get("response", {}).get("header", {}).get("resultCode")
+        if response_code != "00":
+            response_msg = data.get("response", {}).get("header", {}).get("resultMsg", "Unknown error")
+            raise HTTPException(status_code=500, detail=f"기상청 API 오류: {response_msg}")
+        items = data.get("response", {}).get("body", {}).get("items", {}).get("item", [])
+        if not items:
+            raise HTTPException(status_code=404, detail="자외선 지수 정보를 찾을 수 없습니다.")
+        
+        uv_data = items[0]
+            
+        best_uv_index = "0"
+        min_hour_diff = float('inf')
+
+        for hour_offset in range(0, 25, 3):
+            key = f"h{hour_offset}"
+            if key in uv_data:
+                uv_value = uv_data[key]
+
+                if uv_value == "" or uv_value is None:
+                    continue
+                
+                hour_diff = abs(current_hour - hour_offset)
+        
+                if hour_diff > 12:
+                    hour_diff = 24 - hour_diff
+                
+                if hour_diff < min_hour_diff:
+                    min_hour_diff = hour_diff
+                    best_uv_index = uv_value
+
+        try:
+            return int(float(best_uv_index)) if best_uv_index and best_uv_index.strip() != "" else 0
+        except (ValueError, AttributeError):
+            return 0
     except httpx.HTTPStatusError as e:
         print(f"기상청 API 오류: {e.response.text}")
         return {"yesterday_temp": None, "temp_diff": None}

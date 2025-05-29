@@ -90,7 +90,7 @@ def convert_grid_to_region(nx: int, ny: int) -> str:
     return closest_region["regId"]
 
 
-def convert_region_for_airquelity_service(lat: float, lon: float) -> str:
+def convert_lat_lon_for_region(lat: float, lon: float) -> str:
     """
     위도와 경도를 기반으로 지역 코드를 반환합니다.
     :param lat: 위도
@@ -118,7 +118,7 @@ def convert_region_for_airquelity_service(lat: float, lon: float) -> str:
                 closest_region = region
 
     if closest_region and 'subregion' in closest_region and closest_region['subregion']:
-        return closest_region['subregion']
+        return closest_region
     else:
         print("지역을 찾을 수 없습니다. 기본 지역으로 설정합니다.")
         print(f"요청된 위도/경도: ({lat}, {lon})")

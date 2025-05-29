@@ -1,7 +1,7 @@
 from typing import Any, Dict
 
 from fastapi import HTTPException
-from app.services.weather_service import get_ultra_short_forecast, get_hourly_forecast, get_weekly_forecast
+from app.services.weather_service import get_ultra_short_forecast, get_hourly_forecast, get_weekly_forecast, get_weather_uvindex
 from app.services.astronomy_service import get_sunrise_sunset
 from app.services.air_quality import get_current_air_quality, get_hourly_air_quality, get_weekly_air_quality
 from app.utils.walkability_calculator import WalkabilityCalculator
@@ -256,7 +256,8 @@ async def get_walkability_current_detail(
     weather_data["sunset"] = astronomy_data["sunset"]
 
     # 현재 자외선 지수 조회
-    weather_data["uv_index"] = 0
+    uv_data =  await get_weather_uvindex(lat, lon)
+    weather_data["uv_index"] = uv_data
     
     results = {
         "weather": weather_data
