@@ -35,7 +35,6 @@ async def get_walkability_current(
 async def get_walkability_hourly(
     lat: float, 
     lon: float, 
-    region: str, 
     hours: int = 12, 
     dog_size: str = "medium", 
     sensitive_groups: list = None,
@@ -58,7 +57,7 @@ async def get_walkability_hourly(
         raise HTTPException(status_code=404, detail="날씨 정보를 찾을 수 없습니다.")
     
     # 시간별 대기질 정보 조회
-    airquality_data = await get_hourly_air_quality(region, hours)
+    airquality_data = await get_hourly_air_quality(lat, lon, hours)
 
     weather_forecasts = weather_data.get("forecasts", [])
     air_forecasts = airquality_data.get("forecasts", [])

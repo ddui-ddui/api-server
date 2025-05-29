@@ -8,6 +8,7 @@ from app.core.config import settings
 from urllib.parse import unquote
 from app.common.http_client import make_request
 from app.utils.airquality_calculator import calculate_air_quality_score
+from app.utils.convert_for_region import convert_region_for_airquelity_service
 
 
 async def get_current_air_quality(lat: float, lon: float, air_quality_type: str = 'korean') -> Dict[str, Any]:
@@ -171,7 +172,7 @@ async def get_air_quality_data(station_name: str, air_quality_type: str = 'korea
         raise HTTPException(status_code=500, detail=f"미세먼지 데이터 조회 오류: {str(e)}")
     
 
-async def get_hourly_air_quality(region: str, hours: int = 12) -> Dict[str, Any]:
+async def get_hourly_air_quality(lat: float, lon: float, hours: int = 12) -> Dict[str, Any]:
     """
     대기질 정보는 하루에 4번 제공함 
     그래서 데이터가 시간별이라기 보단 오전 오후 데이터라고 보면 편함
@@ -186,6 +187,8 @@ async def get_hourly_air_quality(region: str, hours: int = 12) -> Dict[str, Any]
     param_date = now.strftime("%Y-%m-%d")
     current_hour = now.hour
     current_minute = now.minute
+    region = convert_region_for_airquelity_service(lat, lon)
+
     url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_AIRQUALITY_HOURLY_URL}"
     
     params = {

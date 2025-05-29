@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 def convert_grid_to_region(nx: int, ny: int) -> str:
     """
     유클리드 거리 계산을 사용하며 거리 값이 없거나
@@ -85,3 +88,38 @@ def convert_grid_to_region(nx: int, ny: int) -> str:
         return "11C20401"
     
     return closest_region["regId"]
+
+
+def convert_region_for_airquelity_service(lat: float, lon: float) -> str:
+    """
+    위도와 경도를 기반으로 지역 코드를 반환합니다.
+    :param lat: 위도
+    :param lon: 경도
+    :return: 지역 코드
+    """
+    current_dir = Path(__file__).parent
+    assets_path = current_dir.parent / "assets" / "zone"
+    zone_file = assets_path / "zone.json"
+    default_region = "서울"
+    if not zone_file.exists():
+        return default_region 
+    
+    with open(zone_file, 'r', encoding='utf-8') as f:
+        zone_data = json.load(f)
+
+    closest_region = None
+    min_distance = float('inf')
+    for region in zone_data:
+        if "latitude" in region and "longitude" in region:
+            distance = ((lat - region["latitude"]) ** 2 + (lon - region["longitude"]) ** 2) ** 0.5
+            
+            if distance < min_distance:
+                min_distance = distance
+                closest_region = region
+
+    if closest_region and 'subregion' in closest_region and closest_region['subregion']:
+        return closest_region['subregion']
+    else:
+        print("지역을 찾을 수 없습니다. 기본 지역으로 설정합니다.")
+        print(f"요청된 위도/경도: ({lat}, {lon})")
+        return default_region

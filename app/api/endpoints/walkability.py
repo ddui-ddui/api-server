@@ -30,9 +30,8 @@ async def get_walkability_current (
 
 @router.get("/hourly")
 async def get_walkability_hourly (
-    lat: float = Query(37.5665, description="위도"),
-    lon: float = Query(126.9780, description="경도"),
-    region: str = Query("서울", description="지역명"),
+    lat: float = Query(37.6419378, description="위도"),
+    lon: float = Query(127.0170019, description="경도"),
     hours: int = Query(12, description="시간 (0-12)", ge=1, le=12),
     dog_size: str = Query("medium", description="견종 크기 (small/medium/large)"),
     sensitivities: str = Query("", description="민감군 목록 (쉼표로 구분)"),
@@ -47,7 +46,7 @@ async def get_walkability_hourly (
     :return: 현재 날씨 정보
     """
     try:
-        walkability = await service_get_hourly(lat, lon, region, hours, dog_size, sensitivities, air_quality_type)
+        walkability = await service_get_hourly(lat, lon, hours, dog_size, sensitivities, air_quality_type)
         return success_response(data=walkability)
     except Exception as e:
         raise error_response(500, f"서버 오류: {str(e)}")
