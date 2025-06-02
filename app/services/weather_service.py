@@ -99,6 +99,7 @@ async def get_ultra_short_forecast(lat: float, lon: float, fields: List[str] = N
                 "wind_direction": int(weather_data.get("VEC", 0)),
                 "wind_speed": float(weather_data.get("WSD", 0)),
                 "rainfall": parse_rainfall(weather_data.get("RN1", 0)),
+                "precipitation_type": int(weather_data.get("PTY", 0)),
             }
 
             # 최고/최저 기온 조회
