@@ -110,13 +110,11 @@ async def get_ultra_short_forecast(lat: float, lon: float, fields: List[str] = N
             # 전날 날씨 데이터 조회 및 기온 차이 계산
             if fields is None or "previous_temperature" in fields or "temperature_difference" in fields:
                 prev_weather = await get_previous_weather(nx, ny, base_date, base_time)    
-
-                if prev_weather:
+                if prev_weather is not None:                    
                     current_temperature = all_data['temperature']
                     diff_temperature = round(current_temperature - prev_weather, 1)
                     all_data['prev_weather'] = prev_weather
                     all_data['temperature_difference'] = diff_temperature
-                
 
             if fields is None:
                 result = {
