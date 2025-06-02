@@ -35,9 +35,9 @@ async def get_walkability_current(
         walkability_data = walkability_calculator.calculate_walkability_score(
             temperature=weather_data["temperature"],
             pm10_grade=air_quality_data["pm10_grade"],
-            pm10_value=air_quality_data["pm10"],
+            pm10_value=air_quality_data["pm10_value"],
             pm25_grade=air_quality_data["pm25_grade"],
-            pm25_value=air_quality_data["pm25"],
+            pm25_value=air_quality_data["pm25_value"],
             precipitation_type=weather_data["precipitation_type"],
             sky_condition=weather_data["sky_condition"],
             dog_size=dog_size,

@@ -159,9 +159,9 @@ async def get_air_quality_data(station_name: str, air_quality_type: str = 'korea
         pm10_grade, pm25_grade = calculate_air_quality_score(pm10, pm25, air_quality_type)
         
         results = {
-            "pm10": pm10,
+            "pm10_value": pm10,
             "pm10_grade": pm10_grade,
-            "pm25": pm25,
+            "pm25_value": pm25,
             "pm25_grade": pm25_grade,
         }
             
