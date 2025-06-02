@@ -142,7 +142,6 @@ async def get_walkability_hourly(
 async def get_walkability_weekly(
     lat: float, 
     lon: float, 
-    region: str, 
     days: int = 7,
     dog_size: str = "medium", 
     sensitive_groups: list = None,
@@ -151,7 +150,10 @@ async def get_walkability_weekly(
     현재 날씨 정보 조회
     :param lat: 위도
     :param lon: 경도
-    :param region: 지역명
+    :param days: 일자 (1~7)
+    :param dog_size: 견종 크기 (small/medium/large)
+    :param air_quality_type: 대기질 기준 (korean/who)
+    :param sensitivities: 민감군 목록 (쉼표로 구분)
     :return: 현재 날씨 정보
     """
     if(days > 7):
@@ -164,7 +166,7 @@ async def get_walkability_weekly(
         raise HTTPException(status_code=404, detail="날씨 정보를 찾을 수 없습니다.")
     
     # 시간별 대기질 정보 조회
-    airquality_data = await get_weekly_air_quality(region, air_quality_type, days)
+    airquality_data = await get_weekly_air_quality(lat, lon, air_quality_type, days)
     
     weather_forecasts = weather_data.get("forecasts", [])
     air_forecasts = airquality_data.get("forecasts", [])

@@ -290,7 +290,7 @@ async def get_hourly_air_quality(lat: float, lon: float, hours: int = 12) -> Dic
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"대기질 데이터 처리 오류: {str(e)}")
     
-async def get_weekly_air_quality(region: str, air_quality_type: str, days: int = 7) -> Dict[str, Any]:
+async def get_weekly_air_quality(lat: float, lon: float, air_quality_type: str, days: int = 7) -> Dict[str, Any]:
     """
     주간예보는 당일 조회하면 3일 뒤의 예보부터 3일치가 제공됨
     19일에 조회하면 22일 ~ 24일 예보가 제공됨
@@ -302,7 +302,9 @@ async def get_weekly_air_quality(region: str, air_quality_type: str, days: int =
     그래서 그러는거 같음
     
     현재 날씨 정보 조회
-    :param region: 지역명
+    :param lat: 위도
+    :param lon: 경도
+    :param air_quality_type: 대기질 기준 (korean/who)
     :param days: 날짜 (1~7)
     :return: 현재 날씨 정보
     """
@@ -313,6 +315,8 @@ async def get_weekly_air_quality(region: str, air_quality_type: str, days: int =
     today = now.date()
     start_date = today - timedelta(days=3)
     range_days = 3
+    region = convert_lat_lon_for_region(lat, lon).get("subregion", "")
+    
     
     # 주간 예보 기준 날짜 배열 생성
     dates = {}
