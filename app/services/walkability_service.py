@@ -224,8 +224,8 @@ async def get_walkability_weekly(
                 air_quality_type)
 
             combined_data["walkability"] = {
-                'low': min_temp_result,
-                'high': max_temp_result
+                'min_temperature': min_temp_result,
+                'max_temperature': max_temp_result
             }
         except Exception as e:
             print(f"산책 적합도 점수 계산 실패: {str(e)}")
