@@ -9,7 +9,7 @@ from urllib.parse import unquote
 from app.utils.weather_format_utils import convert_weather_condition, parse_rainfall
 from app.utils.convert_for_region import convert_grid_to_region, convert_lat_lon_for_region
 
-async def get_previous_weather(lat: float, lon: float, current_date: str, current_time: str) -> float:
+async def get_previous_weather(nx: int, ny: int, current_date: str, current_time: str) -> float:
     """
     이전 날씨 정보 조회
     :param lat: 위도
@@ -17,15 +17,14 @@ async def get_previous_weather(lat: float, lon: float, current_date: str, curren
     :param current_datetime: 기준 시간
     :return: 이전 날씨 정보
     """
-    nx, ny = mapToGrid(lat, lon)
-
     # 1. 현재 그리드 좌표로 관측소 위치 조회
-    stationId = await get_weather_station(nx, ny)
+    # stationId = await get_weather_station(nx, ny)
     
     # 2. 관측소 코드로 이전 날씨 정보 조회
-    prev_date = (datetime.strptime(current_date, "%Y%m%d") - timedelta(days=1)).strftime("%Y-%m-%d")
-    prev_time = (datetime.strptime(current_time, "%H%M")).strftime("%H:%M")
-    return await get_prev_weather(stationId, prev_date, prev_time)
+    # prev_date = (datetime.strptime(current_date, "%Y%m%d") - timedelta(days=1)).strftime("%Y-%m-%d")
+    # prev_time = (datetime.strptime(current_time, "%H%M")).strftime("%H:%M")
+    # return await get_prev_weather(stationId, prev_date, prev_time)
+    return 0.0
     
      
 
@@ -91,7 +90,7 @@ async def get_ultra_short_forecast(lat: float, lon: float, fields: List[str] = N
 
                 if fcst_time == closest_time:
                     weather_data[category] = fcst_value
-        
+
             all_data = {
                 "temperature": float(weather_data.get("T1H", 0)),
                 "sky_condition": int(weather_data.get("SKY", 0)),
@@ -110,7 +109,7 @@ async def get_ultra_short_forecast(lat: float, lon: float, fields: List[str] = N
             
             # 전날 날씨 데이터 조회 및 기온 차이 계산
             if fields is None or "previous_temperature" in fields or "temperature_difference" in fields:
-                prev_weather = await get_previous_weather(lat, lon, base_date, base_time)    
+                prev_weather = await get_previous_weather(nx, ny, base_date, base_time)    
 
                 if prev_weather:
                     current_temperature = all_data['temperature']
@@ -649,6 +648,7 @@ async def get_mid_range_forecast(nx: int, ny: int) -> List[Dict[str, Any]]:
 
 async def get_weather_station(nx: str, ny: str) -> int:
     region = convert_grid_to_region(nx, ny)
+    
     params = {
         "serviceKey": unquote(settings.GOV_DATA_API_KEY),
         "numOfRows": 10,
@@ -656,7 +656,9 @@ async def get_weather_station(nx: str, ny: str) -> int:
         "dataType": "JSON",
         "regId": region,
     }
+    
     url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_WEATHER_SEARCH_AREA_URL}"
+    
     try:
         response = await make_request(url=url, params=params)
         response.raise_for_status()
@@ -666,7 +668,9 @@ async def get_weather_station(nx: str, ny: str) -> int:
         if response_code != "00":
             response_msg = data.get("response", {}).get("header", {}).get("resultMsg", "Unknown error")
             raise HTTPException(status_code=500, detail=f"기상청 API 오류: {response_msg}")
+        
         items = data.get("response", {}).get("body", {}).get("items", {}).get("item", [])
+
         if not items:
             raise HTTPException(status_code=404, detail="관측소 정보를 찾을 수 없습니다.")
         

@@ -7,8 +7,8 @@ router = APIRouter()
 
 @router.get("/current")
 async def get_walkability_current (
-    lat: float = Query(37.6419399, description="위도"),
-    lon: float = Query(127.0170059, description="경도"),
+    lat: float = Query(37.4996992, description="위도"),
+    lon: float = Query(127.1037952, description="경도"),
     dog_size: str = Query("medium", description="견종 크기 (small/medium/large)"),
     sensitivities: str = Query("", description="민감군 목록 (쉼표로 구분)"),
     air_quality_type: str = Query("korean", description="대기질 기준 (korean/who)"),
