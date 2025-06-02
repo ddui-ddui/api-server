@@ -98,14 +98,14 @@ async def get_walkability_hourly(
             combined_data["air_quality"] = {
                 "pm10_grade": pm10_grade,
                 "pm25_grade": pm25_grade,
-                "air_quality_score": calculate_air_quality_score_avg(pm10_grade, 0, pm25_grade, 0, air_quality_type),
+                "air_quality_grade": calculate_air_quality_score_avg(pm10_grade, 0, pm25_grade, 0, air_quality_type),
             }
         else:
             # 대기질 정보가 없는 경우 기본값 사용
             combined_data["air_quality"] = {
                 "pm10_grade": 0,
                 "pm25_grade": 0,
-                "air_quality_score": 0           
+                "air_quality_grade": 0           
             }
             
         # 산책 적합도 점수 계산
@@ -204,7 +204,7 @@ async def get_walkability_weekly(
         air_quality_score = air_quality.get("air_quality_score")
         if air_quality:    
             combined_data["air_quality"] = {
-                    "air_quality_score": air_quality_score
+                    "air_quality_grade": air_quality_score
             }
         
         # 산책 적합도 점수 계산
