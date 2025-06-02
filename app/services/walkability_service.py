@@ -29,6 +29,29 @@ async def get_walkability_current(
     if not air_quality_data:
         raise HTTPException(status_code=404, detail="대기질 정보를 찾을 수 없습니다.")
     results["air_quality"] = air_quality_data
+
+    # 산책 적합도 점수 계산
+    try:
+        walkability_data = walkability_calculator.calculate_walkability_score(
+            temperature=weather_data["temperature"],
+            pm10_grade=air_quality_data["pm10_grade"],
+            pm10_value=air_quality_data["pm10"],
+            pm25_grade=air_quality_data["pm25_grade"],
+            pm25_value=air_quality_data["pm25"],
+            precipitation_type=weather_data["precipitation_type"],
+            sky_condition=weather_data["sky_condition"],
+            dog_size=dog_size,
+            air_quality_type=air_quality_type
+        )
+        results["walkability"] = {
+            "score": walkability_data.get("walkability_score"),
+            "grade": walkability_data.get("walkability_grade")
+        }
+    except Exception as e:
+        print(f"산책 적합도 점수 계산 실패: {str(e)}")
+        results["walkability_score"] = {
+            "score": 50  # 중간 값으로 기본 설정
+        }
     
     return {"forecasts": results}
 

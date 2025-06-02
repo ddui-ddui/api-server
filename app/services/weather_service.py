@@ -765,7 +765,6 @@ async def get_weather_uvindex(lat: float, lon: float) -> int:
     
     url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_WEATHER_LIVING_UV_URL}"
 
-    print(region_code)
     try:
         response = await make_request(url=url, params=params)
         response.raise_for_status()
