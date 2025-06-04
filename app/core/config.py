@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     WORKERS: int = 1
     TIMEOUT: int = 30
     RELOAD: bool = False
+    ENVIRONMENT: str = "development"
     
     # Logging
     LOG_LEVEL: str = "info"

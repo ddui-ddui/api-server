@@ -20,12 +20,24 @@ app = FastAPI(
 )
 
 # CORS 설정
-app.add_middleware(
+if settings.ENVIRONMENT == "production":
+    app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+            "https://dduiddui.kr",
+            "https://www.dduiddui.kr",
+        ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+else:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 app.include_router(api_router, prefix=settings.API_V1_URL)
