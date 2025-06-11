@@ -7,25 +7,113 @@ from app.utils.convert_for_grid import mapToGrid
 from app.common.http_client import make_request
 from urllib.parse import unquote
 from app.utils.weather_format_utils import convert_weather_condition, parse_rainfall
-from app.utils.convert_for_region import convert_grid_to_region, convert_lat_lon_for_region
+from app.utils.convert_for_region import convert_grid_to_region, convert_lat_lon_for_region, convert_lat_lon_to_region_id
 
-async def get_previous_weather(nx: int, ny: int, current_date: str, current_time: str) -> float:
+async def get_previous_weather(lat: float, lon: float, current_date: str, current_time: str) -> float:
     """
-    이전 날씨 정보 조회
-    :param lat: 위도
-    :param lon: 경도
-    :param current_datetime: 기준 시간
-    :return: 이전 날씨 정보
+    어제 날씨 정보 조회
+    :param station_id: 관측소 ID
+    :param prev_date: 어제 날짜 (YYYY-MM-DD 형식)
+    :param prev_time: 어제 시간 (HHMM 형식)
+    :return: 어제 날씨 정보
     """
-    # 1. 현재 그리드 좌표로 관측소 위치 조회
-    # stationId = await get_weather_station(nx, ny)
-    
-    # 2. 관측소 코드로 이전 날씨 정보 조회
-    # prev_date = (datetime.strptime(current_date, "%Y%m%d") - timedelta(days=1)).strftime("%Y-%m-%d")
-    # prev_time = (datetime.strptime(current_time, "%H%M")).strftime("%H:%M")
-    # return await get_prev_weather(stationId, prev_date, prev_time)
-    return 0.0
-    
+    stations = convert_lat_lon_to_region_id(lat, lon)
+
+    prev_date = (datetime.strptime(current_date, "%Y%m%d") - timedelta(days=1)).strftime("%Y-%m-%d")
+    prev_time = (datetime.strptime(current_time, "%H%M")).strftime("%H:%M")
+
+    prev_datetime = prev_date + " " + prev_time
+    params_date = prev_date.replace("-", "")
+
+    for station in stations:
+        try:
+            params = {
+                "serviceKey": unquote(settings.GOV_DATA_API_KEY),
+                "numOfRows": 24,
+                "dataType": "JSON",
+                "dataCd": "ASOS",
+                "dateCd": "HR",
+                "startDt": params_date,
+                "startHh": "00",
+                "endDt": params_date,
+                "endHh": "23",
+                "stnIds": station["reg_id"],
+            }
+        
+            url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_WEATHER_SEARCH_PREV_URL}"
+            response = await make_request(url=url, params=params)
+            response.raise_for_status()
+            data = response.json()
+
+            response_code = data.get("response", {}).get("header", {}).get("resultCode")
+            if response_code != "00":
+                response_msg = data.get("response", {}).get("header", {}).get("resultMsg", "Unknown error")
+                print(f"관측소 {station['reg_id']} API 오류: {response_msg}")
+                continue
+            items = data.get("response", {}).get("body", {}).get("items", {}).get("item", [])
+
+            if not items:
+                print(f"관측소 {station['reg_id']}: 데이터가 없습니다.")
+                continue
+            
+            yesterday_temp = None
+            for item in items:
+                item_time = item.get("tm", "")
+                if item_time == prev_datetime:
+                    temp_value = item.get("ta")
+                    if temp_value and temp_value.strip() != "":
+                        try:
+                            yesterday_temp = float(temp_value)
+                            break
+                        except (ValueError, TypeError):
+                            continue
+            
+            if yesterday_temp is None:
+                print(f"관측소 {station['reg_id']}: 정확한 시간 데이터 없음, 가장 가까운 시간 사용")
+                
+                target_hour = int(prev_time.split(":")[0])
+                closest_temp = None
+                min_hour_diff = float('inf')
+                
+                for item in items:
+                    temp_value = item.get("ta")
+                    item_time = item.get("tm", "")
+                    
+                    if temp_value and temp_value.strip() != "" and item_time:
+                        try:
+                            temp = float(temp_value)
+                            # 시간 추출
+                            time_part = item_time.split(" ")[1] if " " in item_time else "00:00:00"
+                            item_hour = int(time_part.split(":")[0])
+                            
+                            hour_diff = abs(target_hour - item_hour)
+                            if hour_diff < min_hour_diff:
+                                min_hour_diff = hour_diff
+                                closest_temp = temp
+                        except (ValueError, TypeError, IndexError):
+                            continue
+                
+                yesterday_temp = closest_temp
+
+            if yesterday_temp is not None:
+                print(f"관측소: {station['reg_id']} 지역: {station['region']} 기상관측소: {station['meteorological']} 온도 조회 성공: {yesterday_temp}°C")
+                return yesterday_temp
+            else:
+                print(f"관측소: {station['reg_id']} 지역: {station['region']} 기상관측소: {station['meteorological']}: 유효한 온도 데이터 없음")
+                continue
+            
+        except httpx.HTTPStatusError as e:
+            print(f"관측소: {station['reg_id']} 지역: {station['region']} 기상관측소: {station['meteorological']} HTTP 오류 (Status {e.response.status_code}): {e.response.text}")
+            continue
+        except httpx.RequestError as e:
+            print(f"관측소: {station['reg_id']} 지역: {station['region']} 기상관측소: {station['meteorological']} 연결 오류: {str(e)}")
+            continue
+        except Exception as e:
+            print(f"관측소: {station['reg_id']} 지역: {station['region']} 기상관측소: {station['meteorological']} 예상치 못한 오류: {str(e)}")
+            continue
+
+    print("모든 관측소에서 어제 온도 데이터를 가져올 수 없습니다.")
+    return None
      
 
 async def get_ultra_short_forecast(lat: float, lon: float, fields: List[str] = None) -> Dict[str, Any]:
@@ -109,13 +197,18 @@ async def get_ultra_short_forecast(lat: float, lon: float, fields: List[str] = N
             
             # 전날 날씨 데이터 조회 및 기온 차이 계산
             if fields is None or "previous_temperature" in fields or "temperature_difference" in fields:
-                prev_weather = await get_previous_weather(nx, ny, base_date, base_time)    
+                prev_weather = await get_previous_weather(lat, lon, base_date, base_time)    
+                current_temperature = all_data['temperature']
+
                 if prev_weather is not None:                    
-                    current_temperature = all_data['temperature']
                     diff_temperature = round(current_temperature - prev_weather, 1)
                     all_data['prev_weather'] = prev_weather
                     all_data['temperature_difference'] = diff_temperature
-
+                else: 
+                    current_temperature = all_data['temperature']
+                    all_data['prev_weather'] = None
+                    all_data['temperature_difference'] = None
+                    
             if fields is None:
                 result = {
                     "temperature": current_temperature,
@@ -644,103 +737,6 @@ async def get_mid_range_forecast(nx: int, ny: int) -> List[Dict[str, Any]]:
     
     return forecasts
 
-async def get_weather_station(nx: str, ny: str) -> int:
-    region = convert_grid_to_region(nx, ny)
-    
-    params = {
-        "serviceKey": unquote(settings.GOV_DATA_API_KEY),
-        "numOfRows": 10,
-        "pageNo": 1,
-        "dataType": "JSON",
-        "regId": region,
-    }
-    
-    url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_WEATHER_SEARCH_AREA_URL}"
-    
-    try:
-        response = await make_request(url=url, params=params)
-        response.raise_for_status()
-        data = response.json()
-        
-        response_code = data.get("response", {}).get("header", {}).get("resultCode")
-        if response_code != "00":
-            response_msg = data.get("response", {}).get("header", {}).get("resultMsg", "Unknown error")
-            raise HTTPException(status_code=500, detail=f"기상청 API 오류: {response_msg}")
-        
-        items = data.get("response", {}).get("body", {}).get("items", {}).get("item", [])
-
-        if not items:
-            raise HTTPException(status_code=404, detail="관측소 정보를 찾을 수 없습니다.")
-        
-        station_code = items[0].get("stnF3")
-        
-        return station_code
-    except httpx.HTTPStatusError as e:
-        print(f"기상청 API 오류: {e.response.text}")
-        return {"yesterday_temp": None, "temp_diff": None}
-    except httpx.RequestError as e:
-        print(f"기상청 API 연결 오류: {str(e)}")
-        return {"yesterday_temp": None, "temp_diff": None}
-    except Exception as e:
-        print(f"어제 온도 조회 오류: {str(e)}")
-        return {"yesterday_temp": None, "temp_diff": None}
-
-async def get_prev_weather(station_id: int, prev_date: str, prev_time: str) -> float:
-    """
-    어제 날씨 정보 조회
-    :param station_id: 관측소 ID
-    :param prev_date: 어제 날짜 (YYYY-MM-DD 형식)
-    :param prev_time: 어제 시간 (HHMM 형식)
-    :return: 어제 날씨 정보
-    """
-    prev_datetime = prev_date + " " + prev_time
-    params_date = prev_date.replace("-", "")
-    params = {
-        "serviceKey": unquote(settings.GOV_DATA_API_KEY),
-        "numOfRows": 24, # 최대 24시간 데이터
-        "dataType": "JSON",
-        "dataCd": "ASOS",
-        "dateCd": "HR",
-        "startDt": params_date,
-        "startHh": "00",
-        "endDt": params_date,
-        "endHh": "23",
-        "stnIds": station_id,
-    }
-    
-    url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_WEATHER_SEARCH_PREV_URL}"
-    try:
-        response = await make_request(url=url, params=params)
-        response.raise_for_status()
-        data = response.json()
-
-        response_code = data.get("response", {}).get("header", {}).get("resultCode")
-        if response_code != "00":
-            response_msg = data.get("response", {}).get("header", {}).get("resultMsg", "Unknown error")
-            raise HTTPException(status_code=500, detail=f"기상청 API 오류: {response_msg}")
-        items = data.get("response", {}).get("body", {}).get("items", {}).get("item", [])
-        if not items:
-            raise HTTPException(status_code=404, detail="관측소 정보를 찾을 수 없습니다.")
-        
-        yesterday_temp = None
-        for item in items:
-            if item.get("tm") == prev_datetime:
-                yesterday_temp = float(item.get("ta", 0))
-                break
-        
-        if yesterday_temp is None:
-            return float(items[0].get("ta", 0))
-        return yesterday_temp
-    except httpx.HTTPStatusError as e:
-        print(f"기상청 API 오류: {e.response.text}")
-        return {"yesterday_temp": None, "temp_diff": None}
-    except httpx.RequestError as e:
-        print(f"기상청 API 연결 오류: {str(e)}")
-        return {"yesterday_temp": None, "temp_diff": None}
-    except Exception as e:
-        print(f"어제 온도 조회 오류: {str(e)}")
-        return {"yesterday_temp": None, "temp_diff": None}
-    
 async def get_weather_uvindex(lat: float, lon: float) -> int:
     """
     자외선 지수 조회

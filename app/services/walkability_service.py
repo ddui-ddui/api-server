@@ -67,7 +67,6 @@ async def get_walkability_hourly(
     :param lat: 위도
     :param lon: 경도
     :param hour: 시간 (0-12)
-    :param region: 지역명
     :return: 현재 날씨 정보
     """
     if(hours > 12):

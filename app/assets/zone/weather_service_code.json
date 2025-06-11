@@ -1,0 +1,857 @@
+[
+  {
+    "reg_id": 90,
+    "region": "속초",
+    "meteorological": "강원지방기상청",
+    "lat": 38.2177478,
+    "lon": 128.578851,
+    "meteorological_lat": 37.8051122,
+    "meteorological_lon": 128.8548214
+  },
+  {
+    "reg_id": 93,
+    "region": "북춘천",
+    "meteorological": "춘천기상대",
+    "lat": 37.9270784,
+    "lon": 127.7161556,
+    "meteorological_lat": 37.9056434,
+    "meteorological_lon": 127.7281805
+  },
+  {
+    "reg_id": 95,
+    "region": "철원",
+    "meteorological": "강원지방기상청",
+    "lat": 38.146861,
+    "lon": 127.313472,
+    "meteorological_lat": 37.8051122,
+    "meteorological_lon": 128.8548214
+  },
+  {
+    "reg_id": 98,
+    "region": "동두천",
+    "meteorological": "수도권기상청",
+    "lat": 37.903664,
+    "lon": 127.060638,
+    "meteorological_lat": 37.2575101,
+    "meteorological_lon": 126.981907
+  },
+  {
+    "reg_id": 99,
+    "region": "파주",
+    "meteorological": "수도권기상청",
+    "lat": 37.760186,
+    "lon": 126.779883,
+    "meteorological_lat": 37.2575101,
+    "meteorological_lon": 126.981907
+  },
+  {
+    "reg_id": 100,
+    "region": "대관령",
+    "meteorological": "강원지방기상청",
+    "lat": 37.673628,
+    "lon": 128.706095,
+    "meteorological_lat": 37.8051122,
+    "meteorological_lon": 128.8548214
+  },
+  {
+    "reg_id": 101,
+    "region": "춘천",
+    "meteorological": "춘천기상대",
+    "lat": 37.881374,
+    "lon": 127.730003,
+    "meteorological_lat": 37.9056434,
+    "meteorological_lon": 127.7281805
+  },
+  {
+    "reg_id": 102,
+    "region": "백령도",
+    "meteorological": "수도권기상청",
+    "lat": 37.974176,
+    "lon": 124.718691,
+    "meteorological_lat": 37.2575101,
+    "meteorological_lon": 126.981907
+  },
+  {
+    "reg_id": 104,
+    "region": "북강릉",
+    "meteorological": "강원지방기상청",
+    "lat": 37.80456,
+    "lon": 128.85535,
+    "meteorological_lat": 37.8051122,
+    "meteorological_lon": 128.8548214
+  },
+  {
+    "reg_id": 105,
+    "region": "강릉",
+    "meteorological": "강원지방기상청",
+    "lat": 37.75147,
+    "lon": 128.89098,
+    "meteorological_lat": 37.8051122,
+    "meteorological_lon": 128.8548214
+  },
+  {
+    "reg_id": 106,
+    "region": "동해",
+    "meteorological": "강원지방기상청",
+    "lat": 37.524758,
+    "lon": 129.114262,
+    "meteorological_lat": 37.8051122,
+    "meteorological_lon": 128.8548214
+  },
+  {
+    "reg_id": 108,
+    "region": "서울",
+    "meteorological": "수도권기상청",
+    "lat": 37.56661,
+    "lon": 126.978388,
+    "meteorological_lat": 37.2575101,
+    "meteorological_lon": 126.981907
+  },
+  {
+    "reg_id": 112,
+    "region": "인천",
+    "meteorological": "수도권기상청",
+    "lat": 37.455942,
+    "lon": 126.70515,
+    "meteorological_lat": 37.2575101,
+    "meteorological_lon": 126.981907
+  },
+  {
+    "reg_id": 114,
+    "region": "원주",
+    "meteorological": "강원지방기상청",
+    "lat": 37.342318,
+    "lon": 127.919969,
+    "meteorological_lat": 37.8051122,
+    "meteorological_lon": 128.8548214
+  },
+  {
+    "reg_id": 115,
+    "region": "울릉도",
+    "meteorological": "대구지방기상청",
+    "lat": 37.484455,
+    "lon": 130.905697,
+    "meteorological_lat": 35.8611389,
+    "meteorological_lon": 128.5861997
+  },
+  {
+    "reg_id": 119,
+    "region": "수원",
+    "meteorological": "수도권기상청",
+    "lat": 37.263476,
+    "lon": 127.028646,
+    "meteorological_lat": 37.2575101,
+    "meteorological_lon": 126.981907
+  },
+  {
+    "reg_id": 121,
+    "region": "영월",
+    "meteorological": "강원지방기상청",
+    "lat": 37.183774,
+    "lon": 128.46185,
+    "meteorological_lat": 37.8051122,
+    "meteorological_lon": 128.8548214
+  },
+  {
+    "reg_id": 127,
+    "region": "충주",
+    "meteorological": "청주기상지청",
+    "lat": 36.991105,
+    "lon": 127.926012,
+    "meteorological_lat": 36.6396814,
+    "meteorological_lon": 127.4406492
+  },
+  {
+    "reg_id": 129,
+    "region": "서산",
+    "meteorological": "홍성기상대",
+    "lat": 36.784921,
+    "lon": 126.450277,
+    "meteorological_lat": 36.657842,
+    "meteorological_lon": 126.6876007
+  },
+  {
+    "reg_id": 130,
+    "region": "울진",
+    "meteorological": "안동기상대",
+    "lat": 36.993087,
+    "lon": 129.400394,
+    "meteorological_lat": 36.5732149,
+    "meteorological_lon": 128.7073313
+  },
+  {
+    "reg_id": 131,
+    "region": "청주",
+    "meteorological": "청주기상지청",
+    "lat": 36.634745,
+    "lon": 127.488601,
+    "meteorological_lat": 37.6396814,
+    "meteorological_lon": 128.4406492
+  },
+  {
+    "reg_id": 133,
+    "region": "대전",
+    "meteorological": "대전지방기상청",
+    "lat": 36.3504396,
+    "lon": 127.3849508,
+    "meteorological_lat": 36.3724178,
+    "meteorological_lon": 127.3717807
+  },
+  {
+    "reg_id": 135,
+    "region": "추풍령",
+    "meteorological": "청주기상지청",
+    "lat": 36.214573,
+    "lon": 127.998683,
+    "meteorological_lat": 38.6396814,
+    "meteorological_lon": 129.4406492
+  },
+  {
+    "reg_id": 136,
+    "region": "안동",
+    "meteorological": "안동기상대",
+    "lat": 36.568425,
+    "lon": 128.729538,
+    "meteorological_lat": 36.5732149,
+    "meteorological_lon": 128.7073313
+  },
+  {
+    "reg_id": 137,
+    "region": "상주",
+    "meteorological": "대구지방기상청",
+    "lat": 36.411002,
+    "lon": 128.159229,
+    "meteorological_lat": 35.8611389,
+    "meteorological_lon": 128.5861997
+  },
+  {
+    "reg_id": 138,
+    "region": "포항",
+    "meteorological": "대구지방기상청",
+    "lat": 36.019033,
+    "lon": 129.34339,
+    "meteorological_lat": 35.8611389,
+    "meteorological_lon": 128.5861997
+  },
+  {
+    "reg_id": 140,
+    "region": "군산",
+    "meteorological": "전주기상지청",
+    "lat": 35.967626,
+    "lon": 126.736875,
+    "meteorological_lat": 35.8406524,
+    "meteorological_lon": 127.1161013
+  },
+  {
+    "reg_id": 143,
+    "region": "대구",
+    "meteorological": "대구지방기상청",
+    "lat": 35.87139,
+    "lon": 128.601763,
+    "meteorological_lat": 35.8611389,
+    "meteorological_lon": 128.5861997
+  },
+  {
+    "reg_id": 146,
+    "region": "전주",
+    "meteorological": "전주기상지청",
+    "lat": 35.824171,
+    "lon": 127.14805,
+    "meteorological_lat": 35.8406524,
+    "meteorological_lon": 127.1161013
+  },
+  {
+    "reg_id": 152,
+    "region": "울산",
+    "meteorological": "울산기상대",
+    "lat": 35.539477,
+    "lon": 129.311299,
+    "meteorological_lat": 35.593133,
+    "meteorological_lon": 129.3557448
+  },
+  {
+    "reg_id": 155,
+    "region": "창원",
+    "meteorological": "창원기상대",
+    "lat": 35.227877,
+    "lon": 128.681875,
+    "meteorological_lat": 35.1705209,
+    "meteorological_lon": 128.5724853
+  },
+  {
+    "reg_id": 156,
+    "region": "광주",
+    "meteorological": "광주지방기상청",
+    "lat": 35.160032,
+    "lon": 126.851338,
+    "meteorological_lat": 35.1735444,
+    "meteorological_lon": 126.8914582
+  },
+  {
+    "reg_id": 159,
+    "region": "부산",
+    "meteorological": "부산지방기상청",
+    "lat": 35.179816,
+    "lon": 129.075022,
+    "meteorological_lat": 35.2179796,
+    "meteorological_lon": 128.9602601
+  },
+  {
+    "reg_id": 162,
+    "region": "통영",
+    "meteorological": "부산지방기상청",
+    "lat": 34.85439,
+    "lon": 128.433112,
+    "meteorological_lat": 35.2179796,
+    "meteorological_lon": 128.9602601
+  },
+  {
+    "reg_id": 165,
+    "region": "목포",
+    "meteorological": "목포기상대",
+    "lat": 34.811875,
+    "lon": 126.392337,
+    "meteorological_lat": 34.817106,
+    "meteorological_lon": 126.3811263
+  },
+  {
+    "reg_id": 168,
+    "region": "여수",
+    "meteorological": "광주지방기상청",
+    "lat": 34.760425,
+    "lon": 127.662313,
+    "meteorological_lat": 35.1735444,
+    "meteorological_lon": 126.8914582
+  },
+  {
+    "reg_id": 169,
+    "region": "흑산도",
+    "meteorological": "광주지방기상청",
+    "lat": 34.682979,
+    "lon": 125.427371,
+    "meteorological_lat": 35.1735444,
+    "meteorological_lon": 126.8914582
+  },
+  {
+    "reg_id": 170,
+    "region": "완도",
+    "meteorological": "목포기상대",
+    "lat": 34.311039,
+    "lon": 126.754852,
+    "meteorological_lat": 34.817106,
+    "meteorological_lon": 126.3811263
+  },
+  {
+    "reg_id": 172,
+    "region": "고창",
+    "meteorological": "전주기상지청",
+    "lat": 35.435836,
+    "lon": 126.701973,
+    "meteorological_lat": 35.8406524,
+    "meteorological_lon": 127.1161013
+  },
+  {
+    "reg_id": 174,
+    "region": "순천",
+    "meteorological": "광주지방기상청",
+    "lat": 34.950698,
+    "lon": 127.487243,
+    "meteorological_lat": 35.1735444,
+    "meteorological_lon": 126.8914582
+  },
+  {
+    "reg_id": 177,
+    "region": "홍성",
+    "meteorological": "홍성기상대",
+    "lat": 36.601324,
+    "lon": 126.660775,
+    "meteorological_lat": 36.657842,
+    "meteorological_lon": 126.6876007
+  },
+  {
+    "reg_id": 184,
+    "region": "제주",
+    "meteorological": "제주지방기상청",
+    "lat": 33.427337,
+    "lon": 126.575834,
+    "meteorological_lat": 33.5137799,
+    "meteorological_lon": 126.5293462
+  },
+  {
+    "reg_id": 185,
+    "region": "고산",
+    "meteorological": "제주지방기상청",
+    "lat": 33.302744,
+    "lon": 126.181314,
+    "meteorological_lat": 33.5137799,
+    "meteorological_lon": 126.5293462
+  },
+  {
+    "reg_id": 188,
+    "region": "성산",
+    "meteorological": "제주지방기상청",
+    "lat": 33.466775,
+    "lon": 126.904602,
+    "meteorological_lat": 33.5137799,
+    "meteorological_lon": 126.5293462
+  },
+  {
+    "reg_id": 189,
+    "region": "서귀포",
+    "meteorological": "제주지방기상청",
+    "lat": 33.253925,
+    "lon": 126.559787,
+    "meteorological_lat": 33.5137799,
+    "meteorological_lon": 126.5293462
+  },
+  {
+    "reg_id": 192,
+    "region": "진주",
+    "meteorological": "창원기상대",
+    "lat": 35.180325,
+    "lon": 128.107646,
+    "meteorological_lat": 35.1705209,
+    "meteorological_lon": 128.5724853
+  },
+  {
+    "reg_id": 201,
+    "region": "강화",
+    "meteorological": "인천기상대",
+    "lat": 37.746498,
+    "lon": 126.488052,
+    "meteorological_lat": 37.4776675,
+    "meteorological_lon": 126.6245055
+  },
+  {
+    "reg_id": 202,
+    "region": "양평",
+    "meteorological": "수도권기상청",
+    "lat": 37.491791,
+    "lon": 127.487597,
+    "meteorological_lat": 37.2575101,
+    "meteorological_lon": 126.981907
+  },
+  {
+    "reg_id": 203,
+    "region": "이천",
+    "meteorological": "수도권기상청",
+    "lat": 37.272342,
+    "lon": 127.435034,
+    "meteorological_lat": 37.2575101,
+    "meteorological_lon": 126.981907
+  },
+  {
+    "reg_id": 211,
+    "region": "인제",
+    "meteorological": "강원지방기상청",
+    "lat": 38.069732,
+    "lon": 128.170352,
+    "meteorological_lat": 37.8051122,
+    "meteorological_lon": 128.8548214
+  },
+  {
+    "reg_id": 212,
+    "region": "홍천",
+    "meteorological": "춘천기상대",
+    "lat": 37.697207,
+    "lon": 127.888518,
+    "meteorological_lat": 37.9056434,
+    "meteorological_lon": 127.7281805
+  },
+  {
+    "reg_id": 216,
+    "region": "태백",
+    "meteorological": "강원지방기상청",
+    "lat": 37.164132,
+    "lon": 128.985735,
+    "meteorological_lat": 37.8051122,
+    "meteorological_lon": 128.8548214
+  },
+  {
+    "reg_id": 217,
+    "region": "정선군",
+    "meteorological": "강원지방기상청",
+    "lat": 37.380609,
+    "lon": 128.660871,
+    "meteorological_lat": 37.8051122,
+    "meteorological_lon": 128.8548214
+  },
+  {
+    "reg_id": 221,
+    "region": "제천",
+    "meteorological": "청주기상지청",
+    "lat": 37.132646,
+    "lon": 128.191037,
+    "meteorological_lat": 39.6396814,
+    "meteorological_lon": 130.4406492
+  },
+  {
+    "reg_id": 226,
+    "region": "보은",
+    "meteorological": "청주기상지청",
+    "lat": 36.489455,
+    "lon": 127.729485,
+    "meteorological_lat": 40.6396814,
+    "meteorological_lon": 131.4406492
+  },
+  {
+    "reg_id": 232,
+    "region": "천안",
+    "meteorological": "대전지방기상청",
+    "lat": 36.815147,
+    "lon": 127.113892,
+    "meteorological_lat": 36.3724178,
+    "meteorological_lon": 127.3717807
+  },
+  {
+    "reg_id": 235,
+    "region": "보령",
+    "meteorological": "대전지방기상청",
+    "lat": 36.333452,
+    "lon": 126.612803,
+    "meteorological_lat": 36.3724178,
+    "meteorological_lon": 127.3717807
+  },
+  {
+    "reg_id": 236,
+    "region": "부여",
+    "meteorological": "대전지방기상청",
+    "lat": 36.275658,
+    "lon": 126.909775,
+    "meteorological_lat": 36.3724178,
+    "meteorological_lon": 127.3717807
+  },
+  {
+    "reg_id": 238,
+    "region": "금산",
+    "meteorological": "대전지방기상청",
+    "lat": 36.108857,
+    "lon": 127.488213,
+    "meteorological_lat": 36.3724178,
+    "meteorological_lon": 127.3717807
+  },
+  {
+    "reg_id": 239,
+    "region": "세종",
+    "meteorological": "대전지방기상청",
+    "lat": 36.480351,
+    "lon": 127.289433,
+    "meteorological_lat": 36.3724178,
+    "meteorological_lon": 127.3717807
+  },
+  {
+    "reg_id": 243,
+    "region": "부안",
+    "meteorological": "전주기상지청",
+    "lat": 35.731755,
+    "lon": 126.733199,
+    "meteorological_lat": 35.8406524,
+    "meteorological_lon": 127.1161013
+  },
+  {
+    "reg_id": 244,
+    "region": "임실",
+    "meteorological": "전주기상지청",
+    "lat": 35.617828,
+    "lon": 127.289077,
+    "meteorological_lat": 35.8406524,
+    "meteorological_lon": 127.1161013
+  },
+  {
+    "reg_id": 245,
+    "region": "정읍",
+    "meteorological": "전주기상지청",
+    "lat": 35.569867,
+    "lon": 126.856038,
+    "meteorological_lat": 35.8406524,
+    "meteorological_lon": 127.1161013
+  },
+  {
+    "reg_id": 247,
+    "region": "남원",
+    "meteorological": "전주기상지청",
+    "lat": 35.416432,
+    "lon": 127.390438,
+    "meteorological_lat": 35.8406524,
+    "meteorological_lon": 127.1161013
+  },
+  {
+    "reg_id": 248,
+    "region": "장수",
+    "meteorological": "전주기상지청",
+    "lat": 35.647331,
+    "lon": 127.521569,
+    "meteorological_lat": 35.8406524,
+    "meteorological_lon": 127.1161013
+  },
+  {
+    "reg_id": 251,
+    "region": "고창군",
+    "meteorological": "전주기상지청",
+    "lat": 35.435836,
+    "lon": 126.701973,
+    "meteorological_lat": 35.8406524,
+    "meteorological_lon": 127.1161013
+  },
+  {
+    "reg_id": 252,
+    "region": "영광군",
+    "meteorological": "광주지방기상청",
+    "lat": 35.277213,
+    "lon": 126.512014,
+    "meteorological_lat": 35.1735444,
+    "meteorological_lon": 126.8914582
+  },
+  {
+    "reg_id": 253,
+    "region": "김해시",
+    "meteorological": "부산지방기상청",
+    "lat": 35.228574,
+    "lon": 128.889322,
+    "meteorological_lat": 35.2179796,
+    "meteorological_lon": 128.9602601
+  },
+  {
+    "reg_id": 254,
+    "region": "순창군",
+    "meteorological": "전주기상지청",
+    "lat": 35.374476,
+    "lon": 127.137489,
+    "meteorological_lat": 35.8406524,
+    "meteorological_lon": 127.1161013
+  },
+  {
+    "reg_id": 255,
+    "region": "북창원",
+    "meteorological": "창원기상대",
+    "lat": 35.2864222,
+    "lon": 128.6055992,
+    "meteorological_lat": 35.1705209,
+    "meteorological_lon": 128.5724853
+  },
+  {
+    "reg_id": 257,
+    "region": "양산시",
+    "meteorological": "울산기상대",
+    "lat": 35.335049,
+    "lon": 129.037339,
+    "meteorological_lat": 35.593133,
+    "meteorological_lon": 129.3557448
+  },
+  {
+    "reg_id": 258,
+    "region": "보성군",
+    "meteorological": "광주지방기상청",
+    "lat": 34.771458,
+    "lon": 127.080088,
+    "meteorological_lat": 35.1735444,
+    "meteorological_lon": 126.8914582
+  },
+  {
+    "reg_id": 259,
+    "region": "강진군",
+    "meteorological": "목포기상대",
+    "lat": 34.64209,
+    "lon": 126.7672,
+    "meteorological_lat": 34.817106,
+    "meteorological_lon": 126.3811263
+  },
+  {
+    "reg_id": 260,
+    "region": "장흥",
+    "meteorological": "목포기상대",
+    "lat": 35.9799,
+    "lon": 129.3725,
+    "meteorological_lat": 34.817106,
+    "meteorological_lon": 126.3811263
+  },
+  {
+    "reg_id": 261,
+    "region": "해남",
+    "meteorological": "목포기상대",
+    "lat": 34.57404,
+    "lon": 126.599435,
+    "meteorological_lat": 34.817106,
+    "meteorological_lon": 126.3811263
+  },
+  {
+    "reg_id": 262,
+    "region": "고흥",
+    "meteorological": "광주지방기상청",
+    "lat": 34.604705,
+    "lon": 127.275507,
+    "meteorological_lat": 35.1735444,
+    "meteorological_lon": 126.8914582
+  },
+  {
+    "reg_id": 263,
+    "region": "의령군",
+    "meteorological": "창원기상대",
+    "lat": 35.322224,
+    "lon": 128.261676,
+    "meteorological_lat": 35.1705209,
+    "meteorological_lon": 128.5724853
+  },
+  {
+    "reg_id": 264,
+    "region": "함양군",
+    "meteorological": "창원기상대",
+    "lat": 35.520536,
+    "lon": 127.725245,
+    "meteorological_lat": 35.1705209,
+    "meteorological_lon": 128.5724853
+  },
+  {
+    "reg_id": 266,
+    "region": "광양시",
+    "meteorological": "광주지방기상청",
+    "lat": 34.940657,
+    "lon": 127.695899,
+    "meteorological_lat": 35.1735444,
+    "meteorological_lon": 126.8914582
+  },
+  {
+    "reg_id": 268,
+    "region": "진도군",
+    "meteorological": "목포기상대",
+    "lat": 34.486818,
+    "lon": 126.263475,
+    "meteorological_lat": 34.817106,
+    "meteorological_lon": 126.3811263
+  },
+  {
+    "reg_id": 271,
+    "region": "봉화",
+    "meteorological": "대구지방기상청",
+    "lat": 36.893114,
+    "lon": 128.732503,
+    "meteorological_lat": 35.8611389,
+    "meteorological_lon": 128.5861997
+  },
+  {
+    "reg_id": 272,
+    "region": "영주",
+    "meteorological": "안동기상대",
+    "lat": 36.805667,
+    "lon": 128.624063,
+    "meteorological_lat": 36.5732149,
+    "meteorological_lon": 128.7073313
+  },
+  {
+    "reg_id": 273,
+    "region": "문경",
+    "meteorological": "안동기상대",
+    "lat": 36.586522,
+    "lon": 128.186787,
+    "meteorological_lat": 36.5732149,
+    "meteorological_lon": 128.7073313
+  },
+  {
+    "reg_id": 276,
+    "region": "청송군",
+    "meteorological": "대구지방기상청",
+    "lat": 36.436279,
+    "lon": 129.057126,
+    "meteorological_lat": 35.8611389,
+    "meteorological_lon": 128.5861997
+  },
+  {
+    "reg_id": 277,
+    "region": "영덕",
+    "meteorological": "대구지방기상청",
+    "lat": 36.415034,
+    "lon": 129.365267,
+    "meteorological_lat": 35.8611389,
+    "meteorological_lon": 128.5861997
+  },
+  {
+    "reg_id": 278,
+    "region": "의성",
+    "meteorological": "대구지방기상청",
+    "lat": 36.352716,
+    "lon": 128.697171,
+    "meteorological_lat": 35.8611389,
+    "meteorological_lon": 128.5861997
+  },
+  {
+    "reg_id": 279,
+    "region": "구미",
+    "meteorological": "대구지방기상청",
+    "lat": 36.119599,
+    "lon": 128.3443,
+    "meteorological_lat": 35.8611389,
+    "meteorological_lon": 128.5861997
+  },
+  {
+    "reg_id": 281,
+    "region": "영천",
+    "meteorological": "대구지방기상청",
+    "lat": 35.97326,
+    "lon": 128.938613,
+    "meteorological_lat": 35.8611389,
+    "meteorological_lon": 128.5861997
+  },
+  {
+    "reg_id": 283,
+    "region": "경주시",
+    "meteorological": "대구지방기상청",
+    "lat": 35.856242,
+    "lon": 129.224784,
+    "meteorological_lat": 35.8611389,
+    "meteorological_lon": 128.5861997
+  },
+  {
+    "reg_id": 284,
+    "region": "거창",
+    "meteorological": "울산기상대",
+    "lat": 35.686698,
+    "lon": 127.909538,
+    "meteorological_lat": 35.593133,
+    "meteorological_lon": 129.3557448
+  },
+  {
+    "reg_id": 285,
+    "region": "합천",
+    "meteorological": "울산기상대",
+    "lat": 35.56666,
+    "lon": 128.165799,
+    "meteorological_lat": 35.593133,
+    "meteorological_lon": 129.3557448
+  },
+  {
+    "reg_id": 288,
+    "region": "밀양",
+    "meteorological": "울산기상대",
+    "lat": 35.503856,
+    "lon": 128.746712,
+    "meteorological_lat": 35.593133,
+    "meteorological_lon": 129.3557448
+  },
+  {
+    "reg_id": 289,
+    "region": "산청",
+    "meteorological": "창원기상대",
+    "lat": 35.415557,
+    "lon": 127.873458,
+    "meteorological_lat": 35.1705209,
+    "meteorological_lon": 128.5724853
+  },
+  {
+    "reg_id": 294,
+    "region": "거제",
+    "meteorological": "부산지방기상청",
+    "lat": 34.880457,
+    "lon": 128.62117,
+    "meteorological_lat": 35.2179796,
+    "meteorological_lon": 128.9602601
+  },
+  {
+    "reg_id": 295,
+    "region": "남해",
+    "meteorological": "부산지방기상청",
+    "lat": 34.837707,
+    "lon": 127.892475,
+    "meteorological_lat": 35.2179796,
+    "meteorological_lon": 128.9602601
+  }
+]

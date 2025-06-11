@@ -1,5 +1,33 @@
 import json
+import math
 from pathlib import Path
+
+def _load_weather_region_codes() -> tuple[list, list, list]:
+    current_dir = Path(__file__).parent
+    assets_path = current_dir.parent / "assets" / "zone"
+    region_file = assets_path / "weather_service_code.json"
+    zone_file = assets_path / "admin_district_code.json"
+    weather_forecast_file = assets_path / "weather_forecast_zone_code.json"
+
+    if not region_file.exists():
+        raise FileNotFoundError(f"Region file not found: {region_file}")
+    with open(region_file, 'r', encoding='utf-8') as f:
+        weather_service_codes = json.load(f)
+
+    if not zone_file.exists():
+        raise FileNotFoundError(f"Zone file not found: {zone_file}")
+    with open(zone_file, 'r', encoding='utf-8') as f:
+        zone_data = json.load(f)
+    
+    if not weather_forecast_file.exists():
+        raise FileNotFoundError(f"Weather forecast file not found: {weather_forecast_file}")
+    with open(weather_forecast_file, 'r', encoding='utf-8') as f:
+        weather_forecast_data = json.load(f)
+
+    return weather_service_codes, zone_data, weather_forecast_data
+
+WEATHER_SERVICE_CODES, ZONE_DATA, WEATHER_FORECAST_DATA = _load_weather_region_codes()
+
 
 def convert_grid_to_region(nx: int, ny: int) -> str:
     """
@@ -11,71 +39,11 @@ def convert_grid_to_region(nx: int, ny: int) -> str:
     :param ny: 격자 y 좌표
     :return: 지역 좌표 ID
     """
-    region_codes = [
-        {"name": "백령도", "regId": "11A00101"},
-        {"name": "서울", "regId": "11B10101", "x": 60, "y": 127},
-        {"name": "과천", "regId": "11B10102", "x": 61, "y": 122},
-        {"name": "광명", "regId": "11B10103", "x": 58, "y": 125},
-        {"name": "강화", "regId": "11B20101", "x": 51, "y": 130},
-        {"name": "김포", "regId": "11B20102", "x": 55, "y": 128},
-        {"name": "인천", "regId": "11B20201", "x": 55, "y": 124},
-        {"name": "시흥", "regId": "11B20202", "x": 57, "y": 123},
-        {"name": "안산", "regId": "11B20203", "x": 58, "y": 121},
-        {"name": "부천", "regId": "11B20204", "x": 57, "y": 125},
-        {"name": "의정부", "regId": "11B20301", "x": 61, "y": 131},
-        {"name": "고양", "regId": "11B20302", "x": 57, "y": 129},
-        {"name": "양주", "regId": "11B20304", "x": 61, "y": 133},
-        {"name": "파주", "regId": "11B20305", "x": 56, "y": 134},
-        {"name": "동두천", "regId": "11B20401", "x": 61, "y": 135},
-        {"name": "연천", "regId": "11B20402", "x": 61, "y": 138},
-        {"name": "포천", "regId": "11B20403", "x": 64, "y": 134},
-        {"name": "가평", "regId": "11B20404", "x": 69, "y": 133},
-        {"name": "구리", "regId": "11B20501", "x": 62, "y": 129},
-        {"name": "남양주", "regId": "11B20502", "x": 64, "y": 130},
-        {"name": "양평", "regId": "11B20503", "x": 71, "y": 126},
-        {"name": "하남", "regId": "11B20504", "x": 64, "y": 126},
-        {"name": "수원", "regId": "11B20601", "x": 60, "y": 121},
-        {"name": "안양", "regId": "11B20602", "x": 59, "y": 123},
-        {"name": "오산", "regId": "11B20603", "x": 62, "y": 118},
-        {"name": "화성", "regId": "11B20604", "x": 57, "y": 119},
-        {"name": "성남", "regId": "11B20605", "x": 63, "y": 124},
-        {"name": "평택", "regId": "11B20606", "x": 62, "y": 114},
-        {"name": "의왕", "regId": "11B20609", "x": 61, "y": 122},
-        {"name": "군포", "regId": "11B20610", "x": 59, "y": 122},
-        {"name": "안성", "regId": "11B20611", "x": 65, "y": 115},
-        {"name": "용인", "regId": "11B20612", "x": 64, "y": 120},
-        {"name": "이천", "regId": "11B20701", "x": 68, "y": 121},
-        {"name": "광주", "regId": "11B20702", "x": 66, "y": 125},
-        {"name": "여주", "regId": "11B20703", "x": 71, "y": 121},
-        {"name": "충주", "regId": "11C10101", "x": 76, "y": 114},
-        {"name": "진천", "regId": "11C10102", "x": 72, "y": 113},
-        {"name": "음성", "regId": "11C10103", "x": 74, "y": 116},
-        {"name": "제천", "regId": "11C10201", "x": 81, "y": 118},
-        {"name": "단양", "regId": "11C10202", "x": 84, "y": 115},
-        {"name": "청주", "regId": "11C10301", "x": 69, "y": 106},
-        {"name": "보은", "regId": "11C10302", "x": 73, "y": 103},
-        {"name": "괴산", "regId": "11C10303", "x": 77, "y": 110},
-        {"name": "증평", "regId": "11C10304", "x": 71, "y": 112},
-        {"name": "추풍령", "regId": "11C10401", "x": 81, "y": 102},
-        {"name": "영동", "regId": "11C10402", "x": 77, "y": 101},
-        {"name": "옥천", "regId": "11C10403", "x": 73, "y": 103},
-        {"name": "서산", "regId": "11C20101", "x": 51, "y": 110},
-        {"name": "태안", "regId": "11C20102", "x": 48, "y": 109},
-        {"name": "당진", "regId": "11C20103", "x": 54, "y": 112},
-        {"name": "홍성", "regId": "11C20104", "x": 55, "y": 106},
-        {"name": "대전", "regId": "11C20401", "x": 67, "y": 100},
-        {"name": "세종", "regId": "11C20404", "x": 66, "y": 103},
-        {"name": "대구", "regId": "11H10701", "x": 89, "y": 90},
-        {"name": "광주", "regId": "11F20501", "x": 58, "y": 74},
-        {"name": "부산", "regId": "11H20201", "x": 98, "y": 76},
-        {"name": "울산", "regId": "11H20101", "x": 102, "y": 84},
-        {"name": "제주", "regId": "11G00201", "x": 52, "y": 38},
-    ]
     
     closest_region = None
     min_distance = float('inf')
     
-    for region in region_codes:
+    for region in WEATHER_FORECAST_DATA:
         if "x" in region and "y" in region:
             distance = ((nx - region["x"]) ** 2 + (ny - region["y"]) ** 2) ** 0.5
 
@@ -89,6 +57,51 @@ def convert_grid_to_region(nx: int, ny: int) -> str:
     
     return closest_region["regId"]
 
+def convert_lat_lon_to_region_id(lat: float, lon: float) -> list:
+    """
+    위도와 경도를 기반으로 가장 가까운 3개 지역 코드를 반환합니다.
+    가까운 순서대로 정렬하여 반환합니다.
+    
+    :param lat: 위도
+    :param lon: 경도
+    :return: 가까운 순서대로 정렬된 3개 지역의 정보 리스트
+    """
+    distances = []
+    
+    # 위도/경도 가중치 (한국 기준으로 실제 거리 비율 적용)
+    LAT_WEIGHT = 1.0      # 위도 1도 ≈ 111km
+    LON_WEIGHT = 0.8      # 경도 1도 ≈ 88km (한국 위도 기준)
+    
+    for region in WEATHER_SERVICE_CODES:
+        if "lat" in region and "lon" in region and region["lat"] is not None and region["lon"] is not None:
+            lat_diff = (lat - region["lat"]) * LAT_WEIGHT
+            lon_diff = (lon - region["lon"]) * LON_WEIGHT
+            
+            distance = math.sqrt(lat_diff**2 + lon_diff**2)
+            
+            distances.append({
+                "region": region,
+                "distance": distance
+            })
+    
+    # 거리 기준으로 정렬 (가까운 순서)
+    distances.sort(key=lambda x: x["distance"])
+    
+    # 상위 3개 선택
+    top_3 = distances[:3]
+    
+    # 결과 리스트 생성
+    result = []
+    for i, item in enumerate(top_3):
+        region_info = {
+            "rank": i + 1,
+            "reg_id": str(item["region"]["reg_id"]),
+            "region": item["region"]["region"],
+            "meteorological": item["region"]["meteorological"]
+        }
+        result.append(region_info)
+    
+    return result
 
 def convert_lat_lon_for_region(lat: float, lon: float) -> str:
     """
