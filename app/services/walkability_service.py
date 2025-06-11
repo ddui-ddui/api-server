@@ -6,6 +6,7 @@ from app.services.astronomy_service import get_sunrise_sunset
 from app.services.air_quality import get_current_air_quality, get_hourly_air_quality, get_weekly_air_quality
 from app.utils.walkability_calculator import WalkabilityCalculator
 from app.utils.airquality_calculator import calculate_air_quality_score_avg
+from app.utils.temperature_calculator import calculate_apparent_temperature
 
 # 산책 적합도 계산기
 walkability_calculator = WalkabilityCalculator()
@@ -268,7 +269,7 @@ async def get_walkability_current_detail(
     lon: float) -> Dict[str, Any]:
     
     # 현재 날씨 상세 정보 조회
-    fields = ["humidity", "wind_speed", "rainfall"]
+    fields = ["temperature", "humidity", "wind_speed", "rainfall"]
     weather_data = await get_ultra_short_forecast(lat, lon, fields)
     if not weather_data:
         raise HTTPException(status_code=404, detail="날씨 정보를 찾을 수 없습니다.")
@@ -278,6 +279,13 @@ async def get_walkability_current_detail(
 
     weather_data["sunrise"] = astronomy_data["sunrise"]
     weather_data["sunset"] = astronomy_data["sunset"]
+
+    # 체감 온도
+    weather_data["apparent_temperature"] = calculate_apparent_temperature(
+        temperature=weather_data["temperature"],
+        humidity=weather_data["humidity"],
+        wind_speed=weather_data["wind_speed"]
+    )
 
     # 현재 자외선 지수 조회
     uv_data =  await get_weather_uvindex(lat, lon)

@@ -110,19 +110,11 @@ def convert_lat_lon_for_region(lat: float, lon: float) -> str:
     :param lon: 경도
     :return: 지역 코드
     """
-    current_dir = Path(__file__).parent
-    assets_path = current_dir.parent / "assets" / "zone"
-    zone_file = assets_path / "zone.json"
     default_region = "서울"
-    if not zone_file.exists():
-        return default_region 
-    
-    with open(zone_file, 'r', encoding='utf-8') as f:
-        zone_data = json.load(f)
-
     closest_region = None
     min_distance = float('inf')
-    for region in zone_data:
+    
+    for region in ZONE_DATA:
         if "latitude" in region and "longitude" in region:
             distance = ((lat - region["latitude"]) ** 2 + (lon - region["longitude"]) ** 2) ** 0.5
             
