@@ -128,11 +128,11 @@ async def get_ultra_short_forecast(lat: float, lon: float, fields: List[str] = N
     
     # Current time
     now = datetime.now()
-    base_date = now.strftime("%Y%m%d")
-
     if now.minute < 45:
         now = now - timedelta(hours=1)
-    base_time =now.strftime("%H00")
+
+    base_date = now.strftime("%Y%m%d")
+    base_time = now.strftime("%H00")
     current_fcst_time = now.strftime("%H%M")
 
 
@@ -148,7 +148,7 @@ async def get_ultra_short_forecast(lat: float, lon: float, fields: List[str] = N
         "ny": ny,
     }
     url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_WEATHER_ULTRA_SHORT_URL}"
-
+    
     try:
             response = await make_request(url=url, params=params)
             response.raise_for_status()
