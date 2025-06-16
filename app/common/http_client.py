@@ -2,6 +2,8 @@ import httpx
 import certifi
 from app.core.config import settings
 from typing import Dict, Any, Optional
+from app.config.logging_config import get_logger
+logger = get_logger()
 
 async def get_http_client() -> httpx.AsyncClient:
     """
@@ -43,6 +45,8 @@ async def make_request(
     Returns:
         httpx.Response: HTTP 응답 객체
     """
+    logger.info(f"Request Url: {url}")
+    logger.info(f"param: {params}")
     async with await get_http_client() as client:
         if method.upper() == "GET":
             response = await client.get(url, params=params, headers=headers)

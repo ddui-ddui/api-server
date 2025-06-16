@@ -9,17 +9,14 @@ class WalkabilityCalculator:
         # 설정 파일 로드
         self.temperature_data = self._load_json_data('temperature.json')
         self.air_quality_data = self._load_json_data('air_quality.json')
-        # 민감군 정의되면 추가해야 함
-        # self.sensitive_groups_data = self._load_json_data('sensitive_groups.json')
+        # self.sensitive_groups_data = self._load_json_data('temperature_sensitive.json')
+        # self.sensitive_groups_data = self._load_json_data('air_quality_sensitive.json')
         
     def _load_json_data(self, filename: str) -> Dict:
         file_path = os.path.join('app', 'assets', 'walkability', filename)
         with open(file_path, 'r', encoding='utf-8') as file:
             return json.load(file)
         
-    # TODO: 
-    # sensitive_groups: List[str] = None)
-    # 민감군 정의되면 추가해야 함
     def calculate_walkability_score(self, 
                                    temperature: float, 
                                    pm10_grade: int, 

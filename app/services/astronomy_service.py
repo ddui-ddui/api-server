@@ -55,6 +55,7 @@ async def get_sunrise_sunset(lat: float, lon: float, retry_days:int = 0) -> dict
         response_msg = result_msg.text if result_msg is not None else "Unknown error"
 
         if response_code != "00":
+            logger.error(f"한국천문연구원 API 오류: {response_code} - {response_msg}")
             raise HTTPException(status_code=500, detail=f"한국천문연구원 API 오류: {response_msg}")
 
         # xml에서 일출 및 일몰 시간 추출

@@ -21,18 +21,29 @@ async def get_current_air_quality(lat: float, lon: float, air_quality_type: str 
     """
     
     # 가까운 측정소 찾기
-    stations = await find_nearby_air_quality_station(lat, lon)
+    try:
+        stations = await find_nearby_air_quality_station(lat, lon)
+    except Exception as e:
+        logger.error(f"측정소 조회 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail="측정소 조회 오류")
+
     if not stations:
-        return None
+        raise HTTPException(status_code=404, detail="근처에 공기질 측정소가 없습니다.")
     
     # 실시간 미세먼지 데이터 조회
-    air_quality_data = await get_air_quality_data(stations, air_quality_type)
-
-    return air_quality_data
+    try:
+        air_quality_data = await get_air_quality_data(stations, air_quality_type)
+        return air_quality_data
+    except Exception as e:
+        logger.error(f"미세먼지 데이터 조회 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail="미세먼지 데이터 조회 오류")
 
 async def find_nearby_air_quality_station(lat: float, lon: float) -> Optional[List]:
     """
     가까운 공기질 측정소를 찾기
+    :param lat: 위도
+    :param lon: 경도
+    :return: 측정소명 리스트
     """
     
     tmx, tmy = convert_wgs84_to_katec(lat, lon)
@@ -173,8 +184,6 @@ async def get_air_quality_data(stations: List[str], air_quality_type: str = 'kor
                 "pm25_value": pm25,
                 "pm25_grade": pm25_grade,
             }
-            
-            logger.info(f"측정소 '{station_name}': 유효한 데이터 발견 - PM10: {pm10}, PM2.5: {pm25}")
             return results
             
         except Exception as e:
