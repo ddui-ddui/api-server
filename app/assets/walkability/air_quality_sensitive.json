@@ -1,0 +1,236 @@
+{
+    "air_quality": {
+      "korean_standard": {
+        "pm25": {
+          "base_grades": [
+            { "min": 0, "max": 15, "grade": 0 },
+            { "min": 16, "max": 35, "grade": 2 },
+            { "min": 36, "max": 75, "grade": 4 },
+            { "min": 76, "max": 999, "grade": 6 }
+          ],
+          "respiratory": {
+            "priority": 1,
+            "thresholds": [
+              { "min": 16, "max": 35, "grade": 3 },
+              { "min": 36, "max": 75, "grade": 5 },
+              { "min": 76, "max": 999, "grade": 7 }
+            ]
+          },
+          "brachycephalic": {
+            "priority": 2,
+            "thresholds": [
+              { "min": 16, "max": 35, "grade": 3 },
+              { "min": 36, "max": 75, "grade": 5 },
+              { "min": 76, "max": 999, "grade": 7 }
+            ]
+          },
+          "puppy": {
+            "priority": 3,
+            "thresholds": [
+              { "min": 36, "max": 75, "grade": 5 },
+              { "min": 76, "max": 999, "grade": 7 }
+            ]
+          },
+          "senior": {
+            "priority": 3,
+            "thresholds": [
+              { "min": 36, "max": 75, "grade": 5 },
+              { "min": 76, "max": 999, "grade": 7 }
+            ]
+          },
+          "heart_disease": {
+            "priority": 4,
+            "thresholds": [
+              { "min": 36, "max": 75, "grade": 5 },
+              { "min": 76, "max": 999, "grade": 7 }
+            ]
+          }
+        },
+        "pm10": {
+          "base_grades": [
+            { "min": 0, "max": 30, "grade": 0 },
+            { "min": 31, "max": 80, "grade": 2 },
+            { "min": 81, "max": 150, "grade": 4 },
+            { "min": 151, "max": 999, "grade": 6 }
+          ],
+          "respiratory": {
+            "priority": 1,
+            "thresholds": [
+              { "min": 31, "max": 80, "grade": 3 },
+              { "min": 81, "max": 150, "grade": 5 },
+              { "min": 151, "max": 999, "grade": 7 }
+            ]
+          },
+          "brachycephalic": {
+            "priority": 2,
+            "thresholds": [
+              { "min": 31, "max": 80, "grade": 3 },
+              { "min": 81, "max": 150, "grade": 5 },
+              { "min": 151, "max": 999, "grade": 7 }
+            ]
+          },
+          "puppy": {
+            "priority": 3,
+            "thresholds": [
+              { "min": 81, "max": 150, "grade": 5 },
+              { "min": 151, "max": 999, "grade": 7 }
+            ]
+          },
+          "senior": {
+            "priority": 3,
+            "thresholds": [
+              { "min": 81, "max": 150, "grade": 5 },
+              { "min": 151, "max": 999, "grade": 7 }
+            ]
+          },
+          "heart_disease": {
+            "priority": 4,
+            "thresholds": [
+              { "min": 81, "max": 150, "grade": 5 },
+              { "min": 151, "max": 999, "grade": 7 }
+            ]
+          }
+        }
+      },
+      "who_standard": {
+        "pm25": {
+          "base_grades": [
+            { "min": 0, "max": 5, "grade": 0 },
+            { "min": 6, "max": 10, "grade": 1 },
+            { "min": 11, "max": 15, "grade": 2 },
+            { "min": 16, "max": 25, "grade": 3 },
+            { "min": 26, "max": 35, "grade": 4 },
+            { "min": 36, "max": 50, "grade": 5 },
+            { "min": 51, "max": 75, "grade": 6 },
+            { "min": 76, "max": 999, "grade": 7 }
+          ],
+          "respiratory": {
+            "priority": 1,
+            "thresholds": [
+              { "min": 6, "max": 10, "grade": 2 },
+              { "min": 11, "max": 15, "grade": 3 },
+              { "min": 16, "max": 25, "grade": 4 },
+              { "min": 26, "max": 35, "grade": 5 },
+              { "min": 36, "max": 50, "grade": 6 },
+              { "min": 51, "max": 75, "grade": 7 },
+              { "min": 76, "max": 999, "grade": 7 }
+            ]
+          },
+          "brachycephalic": {
+            "priority": 2,
+            "thresholds": [
+              { "min": 6, "max": 10, "grade": 2 },
+              { "min": 11, "max": 15, "grade": 3 },
+              { "min": 16, "max": 25, "grade": 4 },
+              { "min": 26, "max": 35, "grade": 5 },
+              { "min": 36, "max": 50, "grade": 6 },
+              { "min": 51, "max": 75, "grade": 7 },
+              { "min": 76, "max": 999, "grade": 7 }
+            ]
+          },
+          "puppy": {
+            "priority": 3,
+            "thresholds": [
+              { "min": 11, "max": 15, "grade": 4 },
+              { "min": 16, "max": 25, "grade": 5 },
+              { "min": 26, "max": 35, "grade": 6 },
+              { "min": 36, "max": 50, "grade": 7 },
+              { "min": 51, "max": 75, "grade": 7 },
+              { "min": 76, "max": 999, "grade": 7 }
+            ]
+          },
+          "senior": {
+            "priority": 3,
+            "thresholds": [
+              { "min": 11, "max": 15, "grade": 4 },
+              { "min": 16, "max": 25, "grade": 5 },
+              { "min": 26, "max": 35, "grade": 6 },
+              { "min": 36, "max": 50, "grade": 7 },
+              { "min": 51, "max": 75, "grade": 7 },
+              { "min": 76, "max": 999, "grade": 7 }
+            ]
+          },
+          "heart_disease": {
+            "priority": 4,
+            "thresholds": [
+              { "min": 11, "max": 15, "grade": 4 },
+              { "min": 16, "max": 25, "grade": 5 },
+              { "min": 26, "max": 35, "grade": 6 },
+              { "min": 36, "max": 50, "grade": 7 },
+              { "min": 51, "max": 75, "grade": 7 },
+              { "min": 76, "max": 999, "grade": 7 }
+            ]
+          }
+        },
+        "pm10": {
+          "base_grades": [
+            { "min": 0, "max": 15, "grade": 0 },
+            { "min": 16, "max": 30, "grade": 1 },
+            { "min": 31, "max": 45, "grade": 2 },
+            { "min": 46, "max": 60, "grade": 3 },
+            { "min": 61, "max": 80, "grade": 4 },
+            { "min": 81, "max": 100, "grade": 5 },
+            { "min": 101, "max": 150, "grade": 6 },
+            { "min": 151, "max": 999, "grade": 7 }
+          ],
+          "respiratory": {
+            "priority": 1,
+            "thresholds": [
+              { "min": 16, "max": 30, "grade": 2 },
+              { "min": 31, "max": 45, "grade": 3 },
+              { "min": 46, "max": 60, "grade": 4 },
+              { "min": 61, "max": 80, "grade": 5 },
+              { "min": 81, "max": 100, "grade": 6 },
+              { "min": 101, "max": 150, "grade": 7 },
+              { "min": 151, "max": 999, "grade": 7 }
+            ]
+          },
+          "brachycephalic": {
+            "priority": 2,
+            "thresholds": [
+              { "min": 16, "max": 30, "grade": 2 },
+              { "min": 31, "max": 45, "grade": 3 },
+              { "min": 46, "max": 60, "grade": 4 },
+              { "min": 61, "max": 80, "grade": 5 },
+              { "min": 81, "max": 100, "grade": 6 },
+              { "min": 101, "max": 150, "grade": 7 },
+              { "min": 151, "max": 999, "grade": 7 }
+            ]
+          },
+          "puppy": {
+            "priority": 3,
+            "thresholds": [
+              { "min": 31, "max": 45, "grade": 4 },
+              { "min": 46, "max": 60, "grade": 5 },
+              { "min": 61, "max": 80, "grade": 6 },
+              { "min": 81, "max": 100, "grade": 7 },
+              { "min": 101, "max": 150, "grade": 7 },
+              { "min": 151, "max": 999, "grade": 7 }
+            ]
+          },
+          "senior": {
+            "priority": 3,
+            "thresholds": [
+              { "min": 31, "max": 45, "grade": 4 },
+              { "min": 46, "max": 60, "grade": 5 },
+              { "min": 61, "max": 80, "grade": 6 },
+              { "min": 81, "max": 100, "grade": 7 },
+              { "min": 101, "max": 150, "grade": 7 },
+              { "min": 151, "max": 999, "grade": 7 }
+            ]
+          },
+          "heart_disease": {
+            "priority": 4,
+            "thresholds": [
+              { "min": 31, "max": 45, "grade": 4 },
+              { "min": 46, "max": 60, "grade": 5 },
+              { "min": 61, "max": 80, "grade": 6 },
+              { "min": 81, "max": 100, "grade": 7 },
+              { "min": 101, "max": 150, "grade": 7 },
+              { "min": 151, "max": 999, "grade": 7 }
+            ]
+          }
+        }
+      }
+    }
+  }

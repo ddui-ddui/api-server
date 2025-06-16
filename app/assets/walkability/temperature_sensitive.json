@@ -1,0 +1,131 @@
+{
+    "puppy": {
+      "priority": 1,
+      "small": [
+        { "min": 32, "max": 999, "grade": 3 },
+        { "min": 29, "max": 31, "grade": 2 },
+        { "min": 23, "max": 28, "grade": 1 },
+        { "min": 1, "max": 6, "grade": 1 },
+        { "min": -4, "max": 0, "grade": 2 },
+        { "min": -18, "max": -3, "grade": 3 }
+      ],
+      "medium": [
+        { "min": 32, "max": 999, "grade": 3 },
+        { "min": 29, "max": 31, "grade": 2 },
+        { "min": 23, "max": 28, "grade": 1 },
+        { "min": 1, "max": 6, "grade": 1 },
+        { "min": -9, "max": 0, "grade": 2 },
+        { "min": -18, "max": -8, "grade": 3 }
+      ],
+      "large": [
+        { "min": 29, "max": 999, "grade": 3 },
+        { "min": 24, "max": 28, "grade": 2 },
+        { "min": 21, "max": 23, "grade": 1 },
+        { "min": -7, "max": 3, "grade": 1 },
+        { "min": -9, "max": -6, "grade": 2 },
+        { "min": -18, "max": -8, "grade": 3 }
+      ]
+    },
+    "heart_disease": {
+      "priority": 2,
+      "small": [
+        { "min": 32, "max": 999, "grade": 3 },
+        { "min": 29, "max": 31, "grade": 2 },
+        { "min": 23, "max": 28, "grade": 1 },
+        { "min": 1, "max": 6, "grade": 1 },
+        { "min": -4, "max": 0, "grade": 2 },
+        { "min": -18, "max": -3, "grade": 2 }
+      ],
+      "medium": [
+        { "min": 32, "max": 999, "grade": 3 },
+        { "min": 29, "max": 31, "grade": 2 },
+        { "min": 23, "max": 28, "grade": 1 },
+        { "min": 1, "max": 6, "grade": 1 },
+        { "min": -9, "max": 0, "grade": 2 },
+        { "min": -18, "max": -3, "grade": 3 }
+      ],
+      "large": [
+        { "min": 29, "max": 999, "grade": 3 },
+        { "min": 24, "max": 28, "grade": 2 },
+        { "min": 21, "max": 23, "grade": 1 },
+        { "min": -7, "max": 3, "grade": 1 },
+        { "min": -9, "max": -6, "grade": 2 },
+        { "min": -18, "max": -8, "grade": 3 }
+      ]
+    },
+    "senior": {
+      "priority": 3,
+      "small": [
+        { "min": 32, "max": 999, "grade": 3 },
+        { "min": 29, "max": 31, "grade": 2 },
+        { "min": 23, "max": 28, "grade": 1 },
+        { "min": 1, "max": 6, "grade": 1 },
+        { "min": -4, "max": 0, "grade": 2 },
+        { "min": -18, "max": -3, "grade": 2 }
+      ],
+      "medium": [
+        { "min": 32, "max": 999, "grade": 3 },
+        { "min": 29, "max": 31, "grade": 2 },
+        { "min": 23, "max": 28, "grade": 1 },
+        { "min": 1, "max": 6, "grade": 1 },
+        { "min": -9, "max": 0, "grade": 2 },
+        { "min": -18, "max": -3, "grade": 3 }
+      ],
+      "large": [
+        { "min": 29, "max": 999, "grade": 3 },
+        { "min": 24, "max": 28, "grade": 2 },
+        { "min": 21, "max": 23, "grade": 1 },
+        { "min": -7, "max": 3, "grade": 1 },
+        { "min": -9, "max": -6, "grade": 2 },
+        { "min": -18, "max": -8, "grade": 3 }
+      ]
+    },
+    "brachycephalic": {
+      "priority": 4,
+      "small": [
+        { "min": 32, "max": 999, "grade": 3 },
+        { "min": 29, "max": 31, "grade": 2 },
+        { "min": 23, "max": 28, "grade": 1 },
+        { "min": -4, "max": 0, "grade": 1 },
+        { "min": -18, "max": -3, "grade": 2 }
+      ],
+      "medium": [
+        { "min": 32, "max": 999, "grade": 3 },
+        { "min": 29, "max": 31, "grade": 2 },
+        { "min": 23, "max": 28, "grade": 1 },
+        { "min": -9, "max": 0, "grade": 1 },
+        { "min": -18, "max": -3, "grade": 2 }
+      ],
+      "large": [
+        { "min": 29, "max": 999, "grade": 3 },
+        { "min": 24, "max": 28, "grade": 2 },
+        { "min": 21, "max": 23, "grade": 1 },
+        { "min": -9, "max": -6, "grade": 1 },
+        { "min": -18, "max": -8, "grade": 2 }
+      ]
+    },
+    "obese": {
+      "priority": 5,
+      "small": [
+        { "min": 32, "max": 999, "grade": 3 },
+        { "min": 29, "max": 31, "grade": 2 },
+        { "min": 23, "max": 28, "grade": 1 },
+        { "min": -4, "max": 0, "grade": 1 },
+        { "min": -18, "max": -3, "grade": 2 }
+      ],
+      "medium": [
+        { "min": 32, "max": 999, "grade": 3 },
+        { "min": 29, "max": 31, "grade": 2 },
+        { "min": 23, "max": 28, "grade": 1 },
+        { "min": -9, "max": 0, "grade": 1 },
+        { "min": -18, "max": -3, "grade": 2 }
+      ],
+      "large": [
+        { "min": 29, "max": 999, "grade": 3 },
+        { "min": 24, "max": 28, "grade": 2 },
+        { "min": 21, "max": 23, "grade": 1 },
+        { "min": -9, "max": -6, "grade": 1 },
+        { "min": -18, "max": -8, "grade": 2 }
+      ]
+    }
+  }
