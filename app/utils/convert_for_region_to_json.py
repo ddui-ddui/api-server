@@ -1,6 +1,8 @@
 import pandas as pd
 import json
 from pathlib import Path
+from app.config.logging_config import get_logger
+logger = get_logger()
 
 northern_gyeonggi = ['고양시','구리시','남양주시','동두천시','양주시','의정부시','파주시','포천시','가평군','연천군']
 southern_gyeonggi = ['과천시','광명시','광주시','군포시','김포시','부천시','성남시','수원시','시흥시','안산시','안성시','안양시','여주시','오산시','용인시','의왕시','이천시','평택시','하남시','화성시','양평군']
@@ -49,7 +51,7 @@ def make_provinces():
 
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump(temp_dict, f, ensure_ascii=False, indent=4)
-    print(f"엑셀 파일을 JSON으로 변환하여 저장했습니다: {output_file}")
+    logger.info(f"엑셀 파일을 JSON으로 변환하여 저장했습니다: {output_file}")
 
 def convert_zone_excel_to_json():
     current_dir = Path(__file__).parent 
@@ -112,10 +114,10 @@ def convert_zone_excel_to_json():
         # JSON 파일로 저장
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(result, f, ensure_ascii=False, indent=4)
-        print(f"엑셀 파일을 JSON으로 변환하여 저장했습니다: {output_file}")
+        logger.info(f"엑셀 파일을 JSON으로 변환하여 저장했습니다: {output_file}")
         
     except Exception as e:
-        print(f"엑셀 파일 읽기 실패: {e}")
+        logger.error(f"엑셀 파일 읽기 실패: {e}")
         return None
     
 if __name__ == "__main__":

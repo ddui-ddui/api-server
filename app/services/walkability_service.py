@@ -7,6 +7,8 @@ from app.services.air_quality import get_current_air_quality, get_hourly_air_qua
 from app.utils.walkability_calculator import WalkabilityCalculator
 from app.utils.airquality_calculator import calculate_air_quality_score_avg
 from app.utils.temperature_calculator import calculate_apparent_temperature
+from app.config.logging_config import get_logger
+logger = get_logger()
 
 # 산책 적합도 계산기
 walkability_calculator = WalkabilityCalculator()
@@ -22,12 +24,14 @@ async def get_walkability_current(
     fields = ["temperature", "precipitation_type", "sky_condition", "min_temperature", "max_temperature", "previous_temperature", "temperature_difference"]
     weather_data = await get_ultra_short_forecast(lat, lon, fields)
     if not weather_data:
+        logger.error(f"날씨 정보 조회 실패: lat={lat}, lon={lon}")
         raise HTTPException(status_code=404, detail="날씨 정보를 찾을 수 없습니다.")
     results["weather"] = weather_data
     
     # 현재 대기질 정보 조회
     air_quality_data = await get_current_air_quality(lat, lon, air_quality_type)
     if not air_quality_data:
+        logger.error(f"대기질 정보 조회 실패: lat={lat}, lon={lon}")
         raise HTTPException(status_code=404, detail="대기질 정보를 찾을 수 없습니다.")
     results["air_quality"] = air_quality_data
 
@@ -49,7 +53,7 @@ async def get_walkability_current(
             "grade": walkability_data.get("walkability_grade")
         }
     except Exception as e:
-        print(f"산책 적합도 점수 계산 실패: {str(e)}")
+        logger.error(f"산책 적합도 점수 계산 실패: {str(e)}")
         results["walkability_score"] = {
             "score": 50  # 중간 값으로 기본 설정
         }
@@ -71,12 +75,14 @@ async def get_walkability_hourly(
     :return: 현재 날씨 정보
     """
     if(hours > 12):
+        logger.error(f"시간 조회 오류: {hours}시간은 최대 12시간까지만 가능합니다.")
         raise HTTPException(status_code=400, detail="최대 12시간까지만 조회 가능합니다.")
     
     # 시간별 날씨 정보 조회
     weather_data = await get_hourly_forecast(lat, lon, hours)
     
     if not weather_data:
+        logger.error(f"날씨 정보 조회 실패: lat={lat}, lon={lon}")
         raise HTTPException(status_code=404, detail="날씨 정보를 찾을 수 없습니다.")
     
     # 시간별 대기질 정보 조회
@@ -149,7 +155,7 @@ async def get_walkability_hourly(
                 "grade": walkability_data.get("walkability_grade")
             }
         except Exception as e:
-            print(f"산책 적합도 점수 계산 실패: {str(e)}")
+            logger.error(f"산책 적합도 점수 계산 실패: {str(e)}")
             combined_data["walkability_score"] = {
                 "score": 50  # 중간 값으로 기본 설정
             }
@@ -180,16 +186,22 @@ async def get_walkability_weekly(
     :return: 현재 날씨 정보
     """
     if(days > 7):
+        logger.error(f"일자 조회 오류: {days}일은 최대 7일까지만 가능합니다.")
         raise HTTPException(status_code=400, detail="최대 7일까지만 조회 가능합니다.")
 
     # 시간별 날씨 정보 조회
     weather_data = await get_weekly_forecast(lat, lon, days)
     
     if not weather_data:
+        logger.error(f"날씨 정보 조회 실패: lat={lat}, lon={lon}")
         raise HTTPException(status_code=404, detail="날씨 정보를 찾을 수 없습니다.")
     
     # 시간별 대기질 정보 조회
     airquality_data = await get_weekly_air_quality(lat, lon, air_quality_type, days)
+    
+    if not airquality_data:
+        logger.error(f"대기질 정보 조회 실패: lat={lat}, lon={lon}")
+        raise HTTPException(status_code=404, detail="대기질 정보를 찾을 수 없습니다.")
     
     weather_forecasts = weather_data.get("forecasts", [])
     air_forecasts = airquality_data.get("forecasts", [])
@@ -251,7 +263,7 @@ async def get_walkability_weekly(
                 'max_temperature': max_temp_result
             }
         except Exception as e:
-            print(f"산책 적합도 점수 계산 실패: {str(e)}")
+            logger.error(f"산책 적합도 점수 계산 실패: {str(e)}")
             combined_data["walkability_score"] = {
                 "score": 50  # 중간 값으로 기본 설정
             }
@@ -272,10 +284,14 @@ async def get_walkability_current_detail(
     fields = ["temperature", "humidity", "wind_speed", "rainfall"]
     weather_data = await get_ultra_short_forecast(lat, lon, fields)
     if not weather_data:
+        logger.error(f"날씨 정보 조회 실패: lat={lat}, lon={lon}")
         raise HTTPException(status_code=404, detail="날씨 정보를 찾을 수 없습니다.")
 
     # 오늘 일출 일몰 시간 조회
     astronomy_data = await get_sunrise_sunset(lat, lon)
+    if not astronomy_data:
+        logger.error(f"일출/일몰 정보 조회 실패: lat={lat}, lon={lon}")
+        raise HTTPException(status_code=404, detail="천문 정보를 찾을 수 없습니다.")
 
     weather_data["sunrise"] = astronomy_data["sunrise"]
     weather_data["sunset"] = astronomy_data["sunset"]
@@ -289,6 +305,10 @@ async def get_walkability_current_detail(
 
     # 현재 자외선 지수 조회
     uv_data =  await get_weather_uvindex(lat, lon)
+    if not uv_data:
+        logger.error(f"자외선 지수 조회 실패: lat={lat}, lon={lon}")
+        raise HTTPException(status_code=404, detail="자외선 지수를 찾을 수 없습니다.")
+    
     weather_data["uv_index"] = uv_data
     
     results = {

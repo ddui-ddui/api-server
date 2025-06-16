@@ -6,6 +6,8 @@ import xml.etree.ElementTree as ET
 
 from app.common.http_client import make_request
 from app.core.config import settings
+from app.config.logging_config import get_logger
+logger = get_logger()
 
 
 async def get_sunrise_sunset(lat: float, lon: float, retry_days:int = 0) -> dict[str, str]:
@@ -23,7 +25,7 @@ async def get_sunrise_sunset(lat: float, lon: float, retry_days:int = 0) -> dict
     target_date = datetime.now() - timedelta(days=retry_days)
     date_str = target_date.strftime("%Y%m%d")
 
-    print(f"일출/일몰 조회 시도: {date_str} (retry_days: {retry_days})")
+    logger.info(f"일출/일몰 조회 시도: {date_str} (retry_days: {retry_days})")
 
     # Request URL
     params = {
@@ -85,8 +87,10 @@ async def get_sunrise_sunset(lat: float, lon: float, retry_days:int = 0) -> dict
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=e.response.status_code, detail=f"한국천문연구원 API 오류: {e.response.text}")
     except httpx.RequestError as e:
-        print(f"한국천문연구원 API 서비스에 연결할 수 없습니다: {str(e)}")
+        logger.error(f"한국천문연구원 API 서비스에 연결할 수 없습니다: {str(e)}")
+        logger.info(f"일출/일몰 조회 재시도: {retry_days + 1}일 전")
         return await get_sunrise_sunset(lat, lon, retry_days + 1)
     except Exception as e:
-        print(f"한국천문연구원 데이터 처리 오류: {str(e)}")
+        logger.error(f"한국천문연구원 데이터 처리 오류: {str(e)}")
+        logger.info(f"일출/일몰 조회 재시도: {retry_days + 1}일 전")
         return await get_sunrise_sunset(lat, lon, retry_days + 1)

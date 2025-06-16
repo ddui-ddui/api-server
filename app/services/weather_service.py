@@ -8,6 +8,8 @@ from app.common.http_client import make_request
 from urllib.parse import unquote
 from app.utils.weather_format_utils import convert_weather_condition, parse_rainfall
 from app.utils.convert_for_region import convert_grid_to_region, convert_lat_lon_for_region, convert_lat_lon_to_region_id
+from app.config.logging_config import get_logger
+logger = get_logger()
 
 async def get_previous_weather(lat: float, lon: float, current_date: str, current_time: str) -> float:
     """
@@ -48,12 +50,12 @@ async def get_previous_weather(lat: float, lon: float, current_date: str, curren
             response_code = data.get("response", {}).get("header", {}).get("resultCode")
             if response_code != "00":
                 response_msg = data.get("response", {}).get("header", {}).get("resultMsg", "Unknown error")
-                print(f"관측소 {station['reg_id']} API 오류: {response_msg}")
+                logger.info(f"관측소 {station['reg_id']} API 오류: {response_msg}")
                 continue
             items = data.get("response", {}).get("body", {}).get("items", {}).get("item", [])
 
             if not items:
-                print(f"관측소 {station['reg_id']}: 데이터가 없습니다.")
+                logger.info(f"관측소 {station['reg_id']}: 데이터가 없습니다.")
                 continue
             
             yesterday_temp = None
@@ -69,7 +71,7 @@ async def get_previous_weather(lat: float, lon: float, current_date: str, curren
                             continue
             
             if yesterday_temp is None:
-                print(f"관측소 {station['reg_id']}: 정확한 시간 데이터 없음, 가장 가까운 시간 사용")
+                logger.info(f"관측소 {station['reg_id']}: 정확한 시간 데이터 없음, 가장 가까운 시간 사용")
                 
                 target_hour = int(prev_time.split(":")[0])
                 closest_temp = None
@@ -96,23 +98,23 @@ async def get_previous_weather(lat: float, lon: float, current_date: str, curren
                 yesterday_temp = closest_temp
 
             if yesterday_temp is not None:
-                print(f"관측소: {station['reg_id']} 지역: {station['region']} 기상관측소: {station['meteorological']} 온도 조회 성공: {yesterday_temp}°C")
+                logger.info(f"관측소: {station['reg_id']} 지역: {station['region']} 기상관측소: {station['meteorological']} 온도 조회 성공: {yesterday_temp}°C")
                 return yesterday_temp
             else:
-                print(f"관측소: {station['reg_id']} 지역: {station['region']} 기상관측소: {station['meteorological']}: 유효한 온도 데이터 없음")
+                logger.info(f"관측소: {station['reg_id']} 지역: {station['region']} 기상관측소: {station['meteorological']}: 유효한 온도 데이터 없음")
                 continue
             
         except httpx.HTTPStatusError as e:
-            print(f"관측소: {station['reg_id']} 지역: {station['region']} 기상관측소: {station['meteorological']} HTTP 오류 (Status {e.response.status_code}): {e.response.text}")
+            logger.info(f"관측소: {station['reg_id']} 지역: {station['region']} 기상관측소: {station['meteorological']} HTTP 오류 (Status {e.response.status_code}): {e.response.text}")
             continue
         except httpx.RequestError as e:
-            print(f"관측소: {station['reg_id']} 지역: {station['region']} 기상관측소: {station['meteorological']} 연결 오류: {str(e)}")
+            logger.info(f"관측소: {station['reg_id']} 지역: {station['region']} 기상관측소: {station['meteorological']} 연결 오류: {str(e)}")
             continue
         except Exception as e:
-            print(f"관측소: {station['reg_id']} 지역: {station['region']} 기상관측소: {station['meteorological']} 예상치 못한 오류: {str(e)}")
+            logger.info(f"관측소: {station['reg_id']} 지역: {station['region']} 기상관측소: {station['meteorological']} 예상치 못한 오류: {str(e)}")
             continue
 
-    print("모든 관측소에서 어제 온도 데이터를 가져올 수 없습니다.")
+    logger.info("모든 관측소에서 어제 온도 데이터를 가져올 수 없습니다.")
     return None
      
 
@@ -801,11 +803,11 @@ async def get_weather_uvindex(lat: float, lon: float) -> int:
         except (ValueError, AttributeError):
             return 0
     except httpx.HTTPStatusError as e:
-        print(f"기상청 API 오류: {e.response.text}")
+        logger.info(f"기상청 API 오류: {e.response.text}")
         return {"yesterday_temp": None, "temp_diff": None}
     except httpx.RequestError as e:
-        print(f"기상청 API 연결 오류: {str(e)}")
+        logger.info(f"기상청 API 연결 오류: {str(e)}")
         return {"yesterday_temp": None, "temp_diff": None}
     except Exception as e:
-        print(f"어제 온도 조회 오류: {str(e)}")
+        logger.info(f"어제 온도 조회 오류: {str(e)}")
         return {"yesterday_temp": None, "temp_diff": None}

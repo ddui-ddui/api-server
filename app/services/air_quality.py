@@ -1,5 +1,4 @@
 from datetime import date, datetime, timedelta
-import sys
 from typing import List, Optional, Dict, Any
 
 from fastapi import HTTPException
@@ -9,6 +8,8 @@ from urllib.parse import unquote
 from app.common.http_client import make_request
 from app.utils.airquality_calculator import calculate_air_quality_score
 from app.utils.convert_for_region import convert_lat_lon_for_region
+from app.config.logging_config import get_logger
+logger = get_logger()
 
 
 async def get_current_air_quality(lat: float, lon: float, air_quality_type: str = 'korean') -> Dict[str, Any]:
@@ -67,7 +68,7 @@ async def find_nearby_air_quality_station(lat: float, lon: float) -> Optional[Li
         return results
     
     except Exception as e:
-        print(f"측정소 조회 오류: {str(e)}")
+        logger.error(f"측정소 조회 오류: {str(e)}")
         return None
 
 async def get_air_quality_data(stations: List[str], air_quality_type: str = 'korean') -> Dict[str, Any]:
@@ -101,7 +102,7 @@ async def get_air_quality_data(stations: List[str], air_quality_type: str = 'kor
             items = data.get("response", {}).get("body", {}).get("items", [])
             
             if not items:
-                print(f"측정소 '{station_name}': 데이터가 없음, 다음 측정소 시도")
+                logger.info(f"측정소 '{station_name}': 데이터가 없음, 다음 측정소 시도")
                 continue
             
             now = datetime.now()
@@ -144,7 +145,7 @@ async def get_air_quality_data(stations: List[str], air_quality_type: str = 'kor
                     continue
 
             if not closest_item:
-                print(f"측정소 '{station_name}': 유효한 데이터가 없음, 다음 측정소 시도")
+                logger.info(f"측정소 '{station_name}': 유효한 데이터가 없음, 다음 측정소 시도")
                 continue
             
             # 미세먼지 데이터 검증
@@ -153,14 +154,14 @@ async def get_air_quality_data(stations: List[str], air_quality_type: str = 'kor
             
             # pm10Value나 pm25Value가 없거나 "-"인 경우 다음 측정소로
             if not pm10_str or pm10_str == "-" or not pm25_str or pm25_str == "-":
-                print(f"측정소 '{station_name}': PM10({pm10_str}) 또는 PM2.5({pm25_str}) 데이터가 유효하지 않음, 다음 측정소 시도")
+                logger.info(f"측정소 '{station_name}': PM10({pm10_str}) 또는 PM2.5({pm25_str}) 데이터가 유효하지 않음, 다음 측정소 시도")
                 continue
             
             try:
                 pm10 = int(pm10_str)
                 pm25 = int(pm25_str)
             except ValueError:
-                print(f"측정소 '{station_name}': 미세먼지 값을 숫자로 변환할 수 없음, 다음 측정소 시도")
+                logger.info(f"측정소 '{station_name}': 미세먼지 값을 숫자로 변환할 수 없음, 다음 측정소 시도")
                 continue
             
             # 유효한 데이터를 찾았으므로 결과 반환
@@ -173,15 +174,15 @@ async def get_air_quality_data(stations: List[str], air_quality_type: str = 'kor
                 "pm25_grade": pm25_grade,
             }
             
-            print(f"측정소 '{station_name}': 유효한 데이터 발견 - PM10: {pm10}, PM2.5: {pm25}")
+            logger.info(f"측정소 '{station_name}': 유효한 데이터 발견 - PM10: {pm10}, PM2.5: {pm25}")
             return results
             
         except Exception as e:
-            print(f"측정소 '{station_name}' 조회 중 오류 발생: {str(e)}, 다음 측정소 시도")
+            logger.info(f"측정소 '{station_name}' 조회 중 오류 발생: {str(e)}, 다음 측정소 시도")
             continue
     
     # 모든 측정소를 시도했지만 유효한 데이터를 찾지 못한 경우
-    print(f"모든 측정소({len(stations)}개)에서 유효한 미세먼지 데이터를 찾을 수 없습니다.")
+    logger.error(f"모든 측정소({len(stations)}개)에서 유효한 미세먼지 데이터를 찾을 수 없습니다.")
     raise HTTPException(
         status_code=404, 
         detail=f"해당 지역의 미세먼지 데이터를 찾을 수 없습니다. 시도한 측정소: {', '.join(stations)}"
@@ -224,7 +225,7 @@ async def get_hourly_air_quality(lat: float, lon: float, hours: int = 12) -> Dic
         items = data.get("response", {}).get("body", {}).get("items", [])
         
         if not items:
-            print("대기질 예보 데이터가 없습니다.")
+            logger.info("대기질 예보 데이터가 없습니다.")
             return {'forecasts': []}
         
         forecast_time = [5, 11, 17, 23]

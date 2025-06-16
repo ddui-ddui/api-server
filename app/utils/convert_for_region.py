@@ -1,6 +1,8 @@
 import json
 import math
 from pathlib import Path
+from app.config.logging_config import get_logger
+logger = get_logger()
 
 def _load_weather_region_codes() -> tuple[list, list, list]:
     current_dir = Path(__file__).parent
@@ -125,6 +127,6 @@ def convert_lat_lon_for_region(lat: float, lon: float) -> str:
     if closest_region and 'subregion' in closest_region and closest_region['subregion']:
         return closest_region
     else:
-        print("지역을 찾을 수 없습니다. 기본 지역으로 설정합니다.")
-        print(f"요청된 위도/경도: ({lat}, {lon})")
+        logger.info("지역을 찾을 수 없습니다. 기본 지역으로 설정합니다.")
+        logger.info(f"요청된 위도/경도: ({lat}, {lon})")
         return default_region
