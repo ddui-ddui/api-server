@@ -1,22 +1,10 @@
 import json
 import os
 from typing import Dict, List, Any, Union, Tuple
-from app.utils.temperature_calculator import calculate_temperature_score
-from app.utils.airquality_calculator import calculate_air_quality_score_avg
+from app.utils.temperature_calculator import  calculate_temperature_score, calculate_temperature_sensitive_score
+from app.utils.airquality_calculator import calculate_air_quality_score, calculate_air_quality_sensitive_score
 
-class WalkabilityCalculator:
-    def __init__(self):
-        # 설정 파일 로드
-        self.temperature_data = self._load_json_data('temperature.json')
-        self.air_quality_data = self._load_json_data('air_quality.json')
-        # self.sensitive_groups_data = self._load_json_data('temperature_sensitive.json')
-        # self.sensitive_groups_data = self._load_json_data('air_quality_sensitive.json')
-        
-    def _load_json_data(self, filename: str) -> Dict:
-        file_path = os.path.join('app', 'assets', 'walkability', filename)
-        with open(file_path, 'r', encoding='utf-8') as file:
-            return json.load(file)
-        
+class WalkabilityCalculator:     
     def calculate_walkability_score(self, 
                                    temperature: float, 
                                    pm10_grade: int, 
@@ -26,27 +14,39 @@ class WalkabilityCalculator:
                                    precipitation_type: int, 
                                    sky_condition: int,
                                    dog_size: str = "medium",
-                                   air_quality_type: str = "korean") -> Dict[str, Any]:
-        # 최고 점수
-        base_score = 100
+                                   air_quality_type: str = "korean",
+                                   sensitivities: list = None) -> Dict[str, Any]:
         # 기온 계산
-        temp_score = calculate_temperature_score(temperature, dog_size)
-        temp_deduction = self._convert_score_to_deduction(temp_score, max_deduction=40)
+        temperature_score = calculate_temperature_score(temperature, dog_size)
+        # 기온 민감군 점수 계산
+        temperature_sensitive_score = calculate_temperature_sensitive_score(temperature, dog_size, sensitivities)
+        temperature_final_score = temperature_score - temperature_sensitive_score
+
         
         # 대기질 계산
-        air_quality_score = calculate_air_quality_score_avg(pm10_grade, pm10_value, pm25_grade, pm25_value, air_quality_type)
-        air_deduction = self._convert_score_to_deduction(air_quality_score, max_deduction=30)
+        air_quality_score = calculate_air_quality_score(pm10_grade, pm10_value, pm25_grade, pm25_value, air_quality_type)
+        # 미세먼지 민감군 점수 계산
+        air_quality_sensitive_score = calculate_air_quality_sensitive_score(pm10_grade, pm10_value, pm25_grade, pm25_value, sensitivities, air_quality_type)
+        air_quality_final_score = air_quality_score - air_quality_sensitive_score  
         
-        total_deduction = temp_deduction + air_deduction
-        
-        # 최종 점수 계산 (0-100 범위로 제한)
-        walkability_score = round(max(0, min(100, base_score - total_deduction)))
-        walkability_grade = 5 - min(4, walkability_score // 20)
+        combined_score = (temperature_final_score * 0.6) + (air_quality_final_score * 0.4)
+        walkability_score = round(max(0, min(100, combined_score)))
+
+        if walkability_score >= 80:
+            walkability_grade = 5
+        elif walkability_score >= 60:
+            walkability_grade = 4
+        elif walkability_score >= 40:
+            walkability_grade = 3
+        elif walkability_score >= 20:
+            walkability_grade = 2
+        else:
+            walkability_grade = 1
+
         return {
             "walkability_score": walkability_score,
             "walkability_grade": walkability_grade,
         }
-    
     
     def _convert_score_to_deduction(self, score: int, max_deduction: float) -> float:
         """

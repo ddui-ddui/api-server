@@ -6,7 +6,7 @@ from app.utils.convert_for_tm import convert_wgs84_to_katec
 from app.core.config import settings
 from urllib.parse import unquote
 from app.common.http_client import make_request
-from app.utils.airquality_calculator import calculate_air_quality_score
+from app.utils.airquality_calculator import calculate_individual_air_quality_score
 from app.utils.convert_for_region import convert_lat_lon_for_region
 from app.config.logging_config import get_logger
 logger = get_logger()
@@ -176,7 +176,7 @@ async def get_air_quality_data(stations: List[str], air_quality_type: str = 'kor
                 continue
             
             # 유효한 데이터를 찾았으므로 결과 반환
-            pm10_grade, pm25_grade = calculate_air_quality_score(pm10, pm25, air_quality_type)
+            pm10_grade, pm25_grade = calculate_individual_air_quality_score(pm10, pm25, air_quality_type)
             
             results = {
                 "pm10_value": pm10,
@@ -210,13 +210,34 @@ async def get_hourly_air_quality(lat: float, lon: float, hours: int = 12) -> Dic
     :return: 현재 날씨 정보
     """
     now = datetime.now()
-    param_date = now.strftime("%Y-%m-%d")
     current_hour = now.hour
     current_minute = now.minute
     region_data = convert_lat_lon_for_region(lat, lon)
     region = region_data.get("subregion")
 
     url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_AIRQUALITY_HOURLY_URL}"
+
+    forecast_time = [5, 11, 17, 23]
+    closest_time = None
+    param_date = None
+
+    if current_hour < 5 or (current_hour == 5 and current_minute < 30):
+        closest_time = 23
+        param_date = (now - timedelta(days=1)).strftime("%Y-%m-%d")
+    else:
+        # 현재 시간 기준으로 가장 최근 발표 시간 찾기
+        for time in reversed(forecast_time):
+            if time == current_hour and current_minute < 30:
+                continue
+            if time <= current_hour:
+                closest_time = time
+                break
+        
+        if closest_time is None:
+            closest_time = 23
+            param_date = (now - timedelta(days=1)).strftime("%Y-%m-%d")
+        else:
+            param_date = now.strftime("%Y-%m-%d")
     
     params = {
         "serviceKey": unquote(settings.GOV_DATA_API_KEY),
@@ -232,23 +253,9 @@ async def get_hourly_air_quality(lat: float, lon: float, hours: int = 12) -> Dic
         response.raise_for_status()
         data = response.json()
         items = data.get("response", {}).get("body", {}).get("items", [])
-        
         if not items:
             logger.info("대기질 예보 데이터가 없습니다.")
             return {'forecasts': []}
-        
-        forecast_time = [5, 11, 17, 23]
-        closest_time = None
-        
-        for time in reversed(forecast_time):
-            if time == current_hour and current_minute < 30:
-                continue
-            if time <= current_hour:
-                closest_time = time
-                break
-            
-        if closest_time is None:
-            closest_time = 23
             
         closest_time_str = f"{closest_time}시 발표"
         
@@ -435,7 +442,7 @@ def convert_grade_to_value_for_hour(grade):
         return 3
     elif grade == "매우나쁨":
         return 4
-    return 0
+    return 2
 
 def convert_grade_to_value_for_week(grade: str, air_quality_type: str) -> int:
     """

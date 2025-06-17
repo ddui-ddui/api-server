@@ -5,7 +5,7 @@ from app.services.weather_service import get_ultra_short_forecast, get_hourly_fo
 from app.services.astronomy_service import get_sunrise_sunset
 from app.services.air_quality import get_current_air_quality, get_hourly_air_quality, get_weekly_air_quality
 from app.utils.walkability_calculator import WalkabilityCalculator
-from app.utils.airquality_calculator import calculate_air_quality_score_avg
+from app.utils.airquality_calculator import calculate_combined_air_quality_score
 from app.utils.temperature_calculator import calculate_apparent_temperature
 from app.config.logging_config import get_logger
 logger = get_logger()
@@ -16,7 +16,7 @@ async def get_walkability_current(
     lat: float, 
     lon: float, 
     dog_size: str = "medium", 
-    sensitive_groups: list = None,
+    sensitivities: str = None,
     air_quality_type: str = "korean") -> Dict[str, Any]:
     
     results = {}
@@ -39,16 +39,17 @@ async def get_walkability_current(
 
     # 산책 적합도 점수 계산
     try:
-        walkability_data = walkability_calculator.calculate_walkability_score(
+        sensitivities = sensitivities.split(",") if sensitivities else []
+        walkability_data = _walkability_calculator(
             temperature=weather_data["temperature"],
             pm10_grade=air_quality_data["pm10_grade"],
             pm10_value=air_quality_data["pm10_value"],
             pm25_grade=air_quality_data["pm25_grade"],
             pm25_value=air_quality_data["pm25_value"],
-            precipitation_type=weather_data["precipitation_type"],
-            sky_condition=weather_data["sky_condition"],
+            weather_data=weather_data,
             dog_size=dog_size,
-            air_quality_type=air_quality_type
+            air_quality_type=air_quality_type,
+            sensitivities=sensitivities
         )
         results["walkability"] = {
             "score": walkability_data.get("walkability_score"),
@@ -67,7 +68,7 @@ async def get_walkability_hourly(
     lon: float, 
     hours: int = 12, 
     dog_size: str = "medium", 
-    sensitive_groups: list = None,
+    sensitivities: list = None,
     air_quality_type: str = "korean") -> Dict[str, Any]:
     """
     현재 날씨 정보 조회
@@ -109,8 +110,9 @@ async def get_walkability_hourly(
         key = f"{air_forecast.get('base_date', '')}_{air_forecast.get('base_time', '')}"
         air_forecast_map[key] = air_forecast
     
+    # 민감군 comma 배열 처리
+    sensitivities = sensitivities.split(",") if sensitivities else []
     combined_forecasts = []
-    
     for weather in weather_forecasts:
         base_date = weather.get("base_date", "")
         base_time = weather.get("base_time", "")
@@ -140,7 +142,7 @@ async def get_walkability_hourly(
             combined_data["air_quality"] = {
                 "pm10_grade": pm10_grade,
                 "pm25_grade": pm25_grade,
-                "air_quality_grade": calculate_air_quality_score_avg(pm10_grade, 0, pm25_grade, 0, air_quality_type),
+                "air_quality_grade": calculate_combined_air_quality_score(pm10_grade, 0, pm25_grade, 0, air_quality_type),
             }
         else:
             # 대기질 정보가 없는 경우 기본값 사용
@@ -152,16 +154,16 @@ async def get_walkability_hourly(
             
         # 산책 적합도 점수 계산
         try:
-            walkability_data = walkability_calculator.calculate_walkability_score(
+            walkability_data = _walkability_calculator(
                 temperature=combined_data["weather"]["temperature"],
                 pm10_grade=combined_data["air_quality"]["pm10_grade"],
                 pm10_value=0,
                 pm25_grade=combined_data["air_quality"]["pm25_grade"],
                 pm25_value=0,
-                precipitation_type=combined_data["weather"]["precipitation_type"],
-                sky_condition=combined_data["weather"]["sky_condition"],
+                weather_data=combined_data["weather"],
                 dog_size=dog_size,
-                air_quality_type=air_quality_type
+                air_quality_type=air_quality_type,
+                sensitivities=sensitivities
             )
             combined_data["walkability"] = {
                 "score": walkability_data.get("walkability_score"),
@@ -186,7 +188,7 @@ async def get_walkability_weekly(
     lon: float, 
     days: int = 7,
     dog_size: str = "medium", 
-    sensitive_groups: list = None,
+    sensitivities: list = None,
     air_quality_type: str = "korean") -> Dict[str, Any]:
     """
     현재 날씨 정보 조회
@@ -233,6 +235,8 @@ async def get_walkability_weekly(
         key = air_forecast.get('base_date', '')
         air_forecast_map[key] = air_forecast
     
+    # 민감군 comma 배열 처리
+    sensitivities = sensitivities.split(",") if sensitivities else []
     combined_forecasts = []
     
     for weather in weather_forecasts:
@@ -272,13 +276,15 @@ async def get_walkability_weekly(
                 0, 0, air_quality_score, 0,
                 combined_data["weather"], 
                 dog_size, 
-                air_quality_type)
+                air_quality_type,
+                sensitivities)
             max_temp_result = _walkability_calculator(
                 max_temperature, 
                 0, 0, air_quality_score, 0,
                 combined_data["weather"], 
                 dog_size, 
-                air_quality_type)
+                air_quality_type,
+                sensitivities)
 
             combined_data["walkability"] = {
                 'min_temperature': min_temp_result,
@@ -357,8 +363,9 @@ def _walkability_calculator(
     pm25_value: int,
     weather_data: Dict[str, Any],
     dog_size: str = "medium",
-    air_quality_type: str = "korean"
-    ) -> Dict[str, Any]:        
+    air_quality_type: str = "korean",
+    sensitivities: list = None
+    ) -> Dict[str, Any]:   
         return walkability_calculator.calculate_walkability_score(
             temperature=temperature,
             pm10_grade=pm10_grade,
@@ -368,5 +375,6 @@ def _walkability_calculator(
             precipitation_type=weather_data.get("precipitation_type"),
             sky_condition=weather_data.get("sky_condition"),
             dog_size=dog_size,
-            air_quality_type=air_quality_type
+            air_quality_type=air_quality_type,
+            sensitivities=sensitivities
         )

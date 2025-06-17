@@ -1,13 +1,10 @@
-import json
-import os
-from typing import Dict
-
-def _load_json_data(filename: str) -> Dict:
-    file_path = os.path.join('app', 'assets', 'walkability', filename)
-    with open(file_path, 'r', encoding='utf-8') as file:
-        return json.load(file)
+from typing import List
+from app.utils.load_to_json import load_json_data
+from app.config.logging_config import get_logger
+logger = get_logger()
     
-TEMPERATURE_DATA = _load_json_data('temperature.json')
+TEMPERATURE_DATA = load_json_data('temperature.json', 'app', 'assets', 'walkability')
+TEMPERATURE_SENSITIVE = load_json_data('temperature_sensitive.json', 'app', 'assets', 'walkability')
 
 def calculate_temperature_score(temperature: float, dog_size: str) -> int:
     """
@@ -16,12 +13,66 @@ def calculate_temperature_score(temperature: float, dog_size: str) -> int:
     :param dog_size: 강아지 크기 (small, medium, large)
     :return: 기온 점수
     """
-    temp_ranges = TEMPERATURE_DATA.get("temperature", {}).get(dog_size, [])
+    temperature_ranges = TEMPERATURE_DATA.get("temperature", {}).get(dog_size, [])
 
-    for temp_range in temp_ranges:
+    for temp_range in temperature_ranges:
         if temp_range["min"] <= temperature <= temp_range["max"]:
-            return temp_range["score"]
-    return 3
+            grade = temp_range["grade"]
+            grade_to_score_map = {1: 100, 2: 80, 3: 60, 4: 50, 5: 40}
+            return grade_to_score_map.get(grade, 60)
+    
+    return 60
+
+
+def calculate_temperature_sensitive_score(temperature: float, dog_size: str, sensitivities: List) -> int:
+    """
+    온도 민감군 점수 계산
+    :param temperature: 현재 온도
+    :param dog_size: 개 사이즈
+    :param sensitivities: 민감군 리스트 ['puppy', 'senior', 'heart_disease', 'brachycephalic', 'obese']
+    :return: 민감군 보정 등급
+    """
+    if not sensitivities:
+        return 0
+    
+    sensitive_scores = []
+    for group in sensitivities:
+        if group in TEMPERATURE_SENSITIVE:
+            group_data = TEMPERATURE_SENSITIVE[group]
+            size_data = group_data.get(dog_size, group_data.get("medium", []))
+            
+            # 온도 범위에 따른 민감군 등급 찾기
+            for temp_range in size_data:
+                if temp_range["min"] <= temperature <= temp_range["max"]:
+                    sensitive_scores.append({
+                        'group': group,
+                        'score': temp_range["grade"],
+                        'priority': group_data.get("priority", 5)
+                    })
+                    break
+    
+    if not sensitive_scores:
+        return 0
+    
+    # 우선순위로 정렬
+    sensitive_scores.sort(key=lambda x: x['priority'])
+
+    # 우선순위에 따른 가중치
+    # puppy: 100%, heart_disease: 80%, senior: 60%, brachycephalic: 40%, obese: 20%
+    priority_weights = {
+        1: 1.0,
+        2: 0.8,
+        3: 0.6,
+        4: 0.4,
+        5: 0.2 
+    }
+
+    total_score = 0
+    for score_info in sensitive_scores:
+        weight = priority_weights.get(score_info['priority'], 0.1)
+        total_score += score_info['score'] * weight
+    
+    return int(total_score * 5) # 배율 설정 
 
 
 def calculate_apparent_temperature(temperature: float, humidity: int = None, 
@@ -92,3 +143,67 @@ def calculate_wind_chill(temperature: float, wind_speed: float) -> float:
                   0.3965 * temperature * (wind_kmh ** 0.16))
     
     return wind_chill
+
+
+# def calculate_temperature_score(temperature: float, dog_size: str) -> int:
+#     """
+#     기온에 따른 점수 계산
+#     :param temperature: 기온
+#     :param dog_size: 강아지 크기 (small, medium, large)
+#     :return: 기온 점수
+#     """
+#     temp_ranges = TEMPERATURE_DATA.get("temperature", {}).get(dog_size, [])
+
+#     for temp_range in temp_ranges:
+#         if temp_range["min"] <= temperature <= temp_range["max"]:
+#             return temp_range["grade"]
+#     return 2
+
+# def calculate_temperature_sensitive_score(self, temperature: float, dog_size: str, sensitivities: List[str]) -> int:
+#     """
+#     온도 민감군 점수 계산
+#     :param temperature: 현재 온도
+#     :param dog_size: 개 사이즈
+#     :param sensitivities: 민감군 리스트 ['puppy', 'senior', 'heart_disease', 'brachycephalic', 'obese']
+#     :return: 민감군 보정 등급
+#     """
+#     if not sensitivities:
+#         return 0
+    
+#     sensitive_scores = []
+    
+#     # 각 민감군별 점수 계산
+#     for group in sensitivities:
+#         if group in TEMPERATURE_SENSITIVE:
+#             group_data = TEMPERATURE_SENSITIVE[group]
+#             size_data = group_data.get(dog_size, group_data.get("medium", []))
+            
+#             # 온도 범위에 따른 민감군 등급 찾기
+#             for temp_range in size_data:
+#                 if temp_range["min"] <= temperature <= temp_range["max"]:
+#                     sensitive_scores.append({
+#                         'group': group,
+#                         'score': temp_range["grade"],
+#                         'priority': group_data.get("priority", 5)
+#                     })
+#                     break
+    
+#     if not sensitive_scores:
+#         return 0
+    
+#     # 우선순위로 정렬
+#     sensitive_scores.sort(key=lambda x: x['priority'])
+
+#     priority_weights = {
+#         1: 1.0,   # 100% - 6개월 미만
+#         2: 0.8,   # 80% - 심장병
+#         3: 0.6,   # 60% - 노견  
+#         4: 0.4,   # 40% - 단두종
+#         5: 0.2    # 20% - 비만
+#     }
+#     total_score = 0
+#     for score_info in sensitive_scores:
+#         weight = priority_weights.get(score_info['priority'], 0.1)
+#         total_score += score_info['score'] * weight
+    
+#     return int(total_score)

@@ -12,7 +12,7 @@ async def get_walkability_current (
     lat: float = Query(37.4996992, description="위도"),
     lon: float = Query(127.1037952, description="경도"),
     dog_size: str = Query("medium", description="견종 크기 (small/medium/large)"),
-    sensitivities: str = Query("", description="민감군 목록 (쉼표로 구분)"),
+    sensitivities: str = Query("puppy,heart_disease", description="민감군 목록 (쉼표로 구분)"),
     air_quality_type: str = Query("korean", description="대기질 기준 (korean/who)"),
     ) -> Dict[str, Any]:
     """
@@ -37,7 +37,7 @@ async def get_walkability_hourly (
     lon: float = Query(127.0170019, description="경도"),
     hours: int = Query(12, description="시간 (0-12)", ge=1, le=12),
     dog_size: str = Query("medium", description="견종 크기 (small/medium/large)"),
-    sensitivities: str = Query("", description="민감군 목록 (쉼표로 구분)"),
+    sensitivities: str = Query("puppy,heart_disease", description="민감군 목록 (쉼표로 구분)"),
     air_quality_type: str = Query("korean", description="대기질 기준 (korean/who)"),
     ) -> Dict[str, Any]:
     """
@@ -63,7 +63,7 @@ async def get_walkability_weekly (
     lon: float = Query(126.9780, description="경도"),
     days: int = Query(7, description="일자 (1~7)", ge=1, le=7),
     dog_size: str = Query("medium", description="견종 크기 (small/medium/large)"),
-    sensitivities: str = Query("", description="민감군 목록 (쉼표로 구분)"),
+    sensitivities: str = Query("puppy,heart_disease", description="민감군 목록 (쉼표로 구분)"),
     air_quality_type: str = Query("korean", description="대기질 기준 (korean/who)"),
     ) -> Dict[str, Any]:
     """
