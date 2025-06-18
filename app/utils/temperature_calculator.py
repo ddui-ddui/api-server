@@ -29,7 +29,7 @@ def calculate_temperature_sensitive_score(temperature: float, dog_size: str, sen
     온도 민감군 점수 계산
     :param temperature: 현재 온도
     :param dog_size: 개 사이즈
-    :param sensitivities: 민감군 리스트 ['puppy', 'senior', 'heart_disease', 'brachycephalic', 'obese']
+    :param sensitivities: 민감군 리스트 ['puppy', 'senior', 'heart_disease', 'brachycephalic', 'obesity']
     :return: 민감군 보정 등급
     """
     if not sensitivities:
@@ -58,7 +58,7 @@ def calculate_temperature_sensitive_score(temperature: float, dog_size: str, sen
     sensitive_scores.sort(key=lambda x: x['priority'])
 
     # 우선순위에 따른 가중치
-    # puppy: 100%, heart_disease: 80%, senior: 60%, brachycephalic: 40%, obese: 20%
+    # puppy: 100%, heart_disease: 80%, senior: 60%, brachycephalic: 40%, obesity: 20%
     priority_weights = {
         1: 1.0,
         2: 0.8,
@@ -164,7 +164,7 @@ def calculate_wind_chill(temperature: float, wind_speed: float) -> float:
 #     온도 민감군 점수 계산
 #     :param temperature: 현재 온도
 #     :param dog_size: 개 사이즈
-#     :param sensitivities: 민감군 리스트 ['puppy', 'senior', 'heart_disease', 'brachycephalic', 'obese']
+#     :param sensitivities: 민감군 리스트 ['puppy', 'senior', 'heart_disease', 'brachycephalic', 'obesity']
 #     :return: 민감군 보정 등급
 #     """
 #     if not sensitivities:

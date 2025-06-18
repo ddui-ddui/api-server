@@ -104,7 +104,7 @@
         { "min": -18, "max": -8, "grade": 2 }
       ]
     },
-    "obese": {
+    "obesity": {
       "priority": 5,
       "small": [
         { "min": 32, "max": 999, "grade": 3 },
