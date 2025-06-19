@@ -1,12 +1,13 @@
 from app.utils.load_to_json import load_json_data
 from app.config.logging_config import get_logger
+from app.models.walkability import DogSize, CoatType, CoatLength, AirQualityType
 logger = get_logger()
 
 # 대기질 관련 데이터 로드
 AIR_QUALITY_DATA = load_json_data('air_quality.json', 'app', 'assets', 'walkability')
 AIR_QUALITY_SENSITIVE = load_json_data('air_quality_sensitive.json', 'app', 'assets', 'walkability')
 
-def calculate_individual_air_quality_score(pm10_value: int, pm25_value: int, standard: str = "korean") -> int:
+def calculate_individual_air_quality_score(pm10_value: int, pm25_value: int, standard: AirQualityType = AirQualityType.who) -> int:
     """
     대기질에 따른 점수 계산 (1-5)
     :param pm10_value: 미세먼지 농도
@@ -15,10 +16,9 @@ def calculate_individual_air_quality_score(pm10_value: int, pm25_value: int, sta
     :return: 대기질 점수 (pm25, pm10)
     """
     # 대기질 기준 설정
-    standard = f"{standard}_standard" if standard in ["korean", "who"] else "korean_standard"
     return _calculate_air_quality_score_by_value(pm10_value, pm25_value, standard)
 
-def calculate_combined_air_quality_score(pm10_grade: int, pm10_value: int, pm25_grade: int, pm25_value: int, standard: str = "korean") -> int:
+def calculate_combined_air_quality_score(pm10_grade: int, pm10_value: int, pm25_grade: int, pm25_value: int, standard: AirQualityType = AirQualityType.who) -> int:
     """
     대기질에 따른 점수 계산 (1-5)
     :param pm10_grade: 미세먼지 등급 (1-4(최대 8))
@@ -27,14 +27,13 @@ def calculate_combined_air_quality_score(pm10_grade: int, pm10_value: int, pm25_
     :return: 대기질 점수 (1: 최적, 5: 매우 부적합)
     """
     # 대기질 기준 설정
-    standard = f"{standard}_standard" if standard in ["korean", "who"] else "korean_standard"
     # 농도가 있을때, 없을때
     if pm10_value > 0 or pm25_value > 0:
         return _calculate_air_quality_score_avg_by_value(pm10_value, pm25_value, standard)
     else:
         return _calculate_air_quality_score_avg_by_grade(pm10_grade, pm25_grade, standard)
     
-def calculate_air_quality_score(pm10_grade: int = 0, pm10_value: int = 0, pm25_grade: int = 0, pm25_value: int = 0, standard: str = "korean") -> int:
+def calculate_air_quality_score(pm10_grade: int = 0, pm10_value: int = 0, pm25_grade: int = 0, pm25_value: int = 0, standard: AirQualityType = AirQualityType.who) -> int:
     """
     대기질에 따른 점수 계산 (1-5)
     :param pm10_grade: 미세먼지 등급 (1-4(최대 8))
@@ -45,7 +44,6 @@ def calculate_air_quality_score(pm10_grade: int = 0, pm10_value: int = 0, pm25_g
     :return: 대기질 점수 (100: 최적, 0: 매우 부적합)
     """
     # 대기질 기준 설정
-    standard = f"{standard}_standard" if standard in ["korean", "who"] else "korean_standard"
     
     # 농도가 있을때, 없을때
     if pm10_value > 0 or pm25_value > 0:
@@ -131,7 +129,7 @@ def _calculate_air_quality_score_by_value(pm10_value: int, pm25_value: int, stan
     
     return pm10_score, pm25_score
 
-def calculate_air_quality_sensitive_score(pm10_grade: int, pm10_value: int, pm25_grade: int, pm25_value: int, sensitivities, standard: str = "korean") -> int:
+def calculate_air_quality_sensitive_score(pm10_grade: int, pm10_value: int, pm25_grade: int, pm25_value: int, sensitivities, standard: str) -> int:
     """
     대기질 민감군에 따른 점수 계산 (1-5)
     :param pm10_grade: 미세먼지 등급 (1-4(최대 8))
@@ -141,8 +139,6 @@ def calculate_air_quality_sensitive_score(pm10_grade: int, pm10_value: int, pm25
     :param standard: 기준 (korean_standard 또는 who_standard)
     :return: 대기질 민감군 점수 (1: 최적, 5: 매우 부적합)
     """
-
-    standard_key = f"{standard}_standard"
 
     # 한국 등급을 대표 수치로 변환
     korean_grade_to_value = {
@@ -179,7 +175,7 @@ def calculate_air_quality_sensitive_score(pm10_grade: int, pm10_value: int, pm25
 
     pm25_sensitive_total = 0
     pm10_sensitive_total = 0
-    air_quality_data = AIR_QUALITY_SENSITIVE["air_quality"][standard_key]
+    air_quality_data = AIR_QUALITY_SENSITIVE["air_quality"][standard]
 
     logger.info(f"현재 미세먼지 수치/등급 PM2.5 Value: {pm25_value}, PM10 Value: {pm10_value}"
           f", PM2.5 Grade: {pm25_grade}, PM10 Grade: {pm10_grade}")

@@ -450,16 +450,13 @@ def convert_grade_to_value_for_week(grade: str, air_quality_type: str) -> int:
     초미세먼지 일평균 농도 "낮음"은 PM2.5 농도 0∼35 ㎍/㎥이며, "높음"은 PM2.5 농도 36 ㎍/㎥ 이상입니다.
     :param grade: 등급
     :return: 등급 점수
-    """
-    # 대기질 기준 설정
-    standard = f"{air_quality_type}_standard" if air_quality_type in ["korean", "who"] else "korean_standard"
-    
-    if standard == "korean_standard":
+    """    
+    if air_quality_type == "korean_standard":
         if grade == "낮음": # 좋음 수준으로 반환
             return 2
         elif grade == "높음": # 나쁨 수준으로 반환
                 return 3
-    elif standard == "who_standard":
+    elif air_quality_type == "who_standard":
         if grade == "낮음":
             return 2 # 보통 수준으로 반환
         elif grade == "높음":

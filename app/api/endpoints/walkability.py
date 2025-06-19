@@ -18,7 +18,7 @@ async def get_walkability_current (
     sensitivities: str = Query("puppy,heart_disease", description="민감군 목록 (쉼표로 구분)"),
     coat_type: CoatType = Query(CoatType.double, description="모피 종류 (single/double)"),
     coat_length: CoatLength = Query(CoatLength.long, description="모피 길이 (short/long)"),
-    air_quality_type: AirQualityType = Query(AirQualityType.korean, description="대기질 기준 (korean/who)"),
+    air_quality_type: AirQualityType = Query(AirQualityType.who, description="대기질 기준 (korean/who)"),
     ) -> Dict[str, Any]:
     """
     현재 날씨 정보 조회
@@ -32,10 +32,8 @@ async def get_walkability_current (
     try:
         # 민감군 목록 검증
         validate_sensitivities(sensitivities)
-        # 민감군 목록 검증
-        validate_sensitivities(sensitivities)
-        logger.info(f"실시간 요청 정보: lat={lat}, lon={lon}, dog_size={dog_size}, sensitivities={sensitivities}, air_quality_type={air_quality_type}")
-        walkability = await service_get_current(lat, lon, dog_size, sensitivities, coat_type, coat_length, air_quality_type)
+        air_quality_type = f"{air_quality_type.value}_standard"
+        walkability = await service_get_current(lat, lon, dog_size.value, sensitivities, coat_type.value, coat_length.value, air_quality_type)
         return success_response(data=walkability)
     except HTTPException:
         raise
@@ -51,7 +49,7 @@ async def get_walkability_hourly (
     sensitivities: str = Query("puppy,heart_disease", description="민감군 목록 (쉼표로 구분)"),
     coat_type: CoatType = Query(CoatType.double, description="모피 종류 (single/double)"),
     coat_length: CoatLength = Query(CoatLength.long, description="모피 길이 (short/long)"),
-    air_quality_type: AirQualityType = Query(AirQualityType.korean, description="대기질 기준 (korean/who)"),
+    air_quality_type: AirQualityType = Query(AirQualityType.who, description="대기질 기준 (korean/who)"),
     ) -> Dict[str, Any]:
     """
     현재 날씨 정보 조회
@@ -66,8 +64,8 @@ async def get_walkability_hourly (
     try:
         # 민감군 목록 검증
         validate_sensitivities(sensitivities)
-        logger.info(f"시간별 요청 정보: lat={lat}, lon={lon}, hours={hours}, dog_size={dog_size}, sensitivities={sensitivities}, air_quality_type={air_quality_type}")
-        walkability = await service_get_hourly(lat, lon, hours, dog_size, sensitivities, coat_type, coat_length, air_quality_type)
+        air_quality_type = f"{air_quality_type.value}_standard"
+        walkability = await service_get_hourly(lat, lon, hours, dog_size.value, sensitivities, coat_type.value, coat_length.value, air_quality_type)
         return success_response(data=walkability)
     except HTTPException:
         raise
@@ -83,7 +81,7 @@ async def get_walkability_weekly (
     sensitivities: str = Query("puppy,heart_disease", description="민감군 목록 (쉼표로 구분)"),
     coat_type: CoatType = Query(CoatType.double, description="모피 종류 (single/double)"),
     coat_length: CoatLength = Query(CoatLength.long, description="모피 길이 (short/long)"),
-    air_quality_type: AirQualityType = Query(AirQualityType.korean, description="대기질 기준 (korean/who)"),
+    air_quality_type: AirQualityType = Query(AirQualityType.who, description="대기질 기준 (korean/who)"),
     ) -> Dict[str, Any]:
     """
     현재 날씨 정보 조회
@@ -98,8 +96,8 @@ async def get_walkability_weekly (
     try:
         # 민감군 목록 검증
         validate_sensitivities(sensitivities)
-        logger.info(f"주간별 요청 정보: lat={lat}, lon={lon}, days={days}, dog_size={dog_size}, sensitivities={sensitivities}, air_quality_type={air_quality_type}")
-        walkability = await service_get_weekly(lat, lon, days, dog_size, sensitivities, coat_type, coat_length, air_quality_type)
+        air_quality_type = f"{air_quality_type.value}_standard"
+        walkability = await service_get_weekly(lat, lon, days, dog_size.value, sensitivities, coat_type.value, coat_length.value, air_quality_type)
         return success_response(data=walkability)
     except HTTPException:
         raise
@@ -118,7 +116,6 @@ async def get_walkability_current_detail (
     :return: 현재 날씨 상세 정보
     """
     try:
-        logger.info(f"실시간 상세 요청 정보: lat={lat}, lon={lon}")
         walkability = await service_get_current_detail(lat, lon)
         return success_response(data=walkability)
     except HTTPException:
