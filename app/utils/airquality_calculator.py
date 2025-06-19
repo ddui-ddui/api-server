@@ -1,4 +1,6 @@
 from app.utils.load_to_json import load_json_data
+from app.config.logging_config import get_logger
+logger = get_logger()
 
 # 대기질 관련 데이터 로드
 AIR_QUALITY_DATA = load_json_data('air_quality.json', 'app', 'assets', 'walkability')
@@ -162,22 +164,25 @@ def calculate_air_quality_sensitive_score(pm10_grade: int, pm10_value: int, pm25
         8: {"pm25": 85, "pm10": 200}   # 76+ → 85, 151+ → 200
     }
 
+    # 등급은 한국 기준으로만 가능 4등급만을 제공하기 때문
     if pm25_value <= 0 and pm25_grade > 0:
         pm25_value = korean_grade_to_value.get(pm25_grade, {}).get("pm25", 0)
     if pm10_value <= 0 and pm10_grade > 0:
         pm10_value = korean_grade_to_value.get(pm10_grade, {}).get("pm10", 0)
     
     priority_weights = {
-            1: 1.0,   # 100% - respiratory
-            2: 0.8,   # 80% - brachycephalic
-            3: 0.6,   # 60% - puppy/senior
-            4: 0.4,   # 40% - heart_disease
+        1: 1.0,   # 100% - respiratory
+        2: 0.8,   # 80% - brachycephalic
+        3: 0.6,   # 60% - puppy/senior
+        4: 0.4,   # 40% - heart_disease
     }    
 
     pm25_sensitive_total = 0
     pm10_sensitive_total = 0
     air_quality_data = AIR_QUALITY_SENSITIVE["air_quality"][standard_key]
 
+    logger.info(f"현재 미세먼지 수치/등급 PM2.5 Value: {pm25_value}, PM10 Value: {pm10_value}"
+          f", PM2.5 Grade: {pm25_grade}, PM10 Grade: {pm10_grade}")
     # PM2.5 민감군 점수 계산
     pm25_scores = []
     for group in sensitivities:
@@ -191,7 +196,6 @@ def calculate_air_quality_sensitive_score(pm10_grade: int, pm10_value: int, pm25
                         'priority': group_data.get("priority", 5)
                     })
                     break
-    
     # PM10 민감군 점수 계산
     pm10_scores = []
     for group in sensitivities:
@@ -205,7 +209,6 @@ def calculate_air_quality_sensitive_score(pm10_grade: int, pm10_value: int, pm25
                         'priority': group_data.get("priority", 5)
                     })
                     break
-
     # PM2.5 가중합 계산
     if pm25_scores:
         for score_info in pm25_scores:

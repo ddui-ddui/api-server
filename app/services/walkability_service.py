@@ -17,6 +17,8 @@ async def get_walkability_current(
     lon: float, 
     dog_size: str = "medium", 
     sensitivities: str = None,
+    coat_type: str = "double",
+    coat_length: str = "long",
     air_quality_type: str = "korean") -> Dict[str, Any]:
     
     results = {}
@@ -49,7 +51,9 @@ async def get_walkability_current(
             weather_data=weather_data,
             dog_size=dog_size,
             air_quality_type=air_quality_type,
-            sensitivities=sensitivities
+            sensitivities=sensitivities,
+            coat_type=coat_type,
+            coat_length=coat_length
         )
         results["walkability"] = {
             "score": walkability_data.get("walkability_score"),
@@ -69,6 +73,8 @@ async def get_walkability_hourly(
     hours: int = 12, 
     dog_size: str = "medium", 
     sensitivities: list = None,
+    coat_type: str = "double",
+    coat_length: str = "long",
     air_quality_type: str = "korean") -> Dict[str, Any]:
     """
     현재 날씨 정보 조회
@@ -189,6 +195,8 @@ async def get_walkability_weekly(
     days: int = 7,
     dog_size: str = "medium", 
     sensitivities: list = None,
+    coat_type: str = "double",
+    coat_length: str = "long",
     air_quality_type: str = "korean") -> Dict[str, Any]:
     """
     현재 날씨 정보 조회
@@ -364,7 +372,9 @@ def _walkability_calculator(
     weather_data: Dict[str, Any],
     dog_size: str = "medium",
     air_quality_type: str = "korean",
-    sensitivities: list = None
+    sensitivities: list = None,
+    coat_type: str = "double",
+    coat_length: str = "long"
     ) -> Dict[str, Any]:   
         return walkability_calculator.calculate_walkability_score(
             temperature=temperature,
@@ -376,5 +386,7 @@ def _walkability_calculator(
             sky_condition=weather_data.get("sky_condition"),
             dog_size=dog_size,
             air_quality_type=air_quality_type,
-            sensitivities=sensitivities
+            sensitivities=sensitivities,
+            coat_type=coat_type,
+            coat_length=coat_length
         )

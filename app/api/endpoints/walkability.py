@@ -13,6 +13,8 @@ async def get_walkability_current (
     lon: float = Query(127.1037952, description="경도"),
     dog_size: str = Query("medium", description="견종 크기 (small/medium/large)"),
     sensitivities: str = Query("puppy,heart_disease", description="민감군 목록 (쉼표로 구분)"),
+    coat_type: str = Query("double", description="모피 종류 (single/double)"),
+    coat_length: str = Query("long", description="모피 길이 (short/long)"),
     air_quality_type: str = Query("korean", description="대기질 기준 (korean/who)"),
     ) -> Dict[str, Any]:
     """
@@ -26,7 +28,7 @@ async def get_walkability_current (
     """
     try:
         logger.info(f"실시간 요청 정보: lat={lat}, lon={lon}, dog_size={dog_size}, sensitivities={sensitivities}, air_quality_type={air_quality_type}")
-        walkability = await service_get_current(lat, lon, dog_size, sensitivities, air_quality_type)
+        walkability = await service_get_current(lat, lon, dog_size, sensitivities, coat_type, coat_length, air_quality_type)
         return success_response(data=walkability)
     except Exception as e:
         raise error_response(500, f"실시간 날씨 조회 오류: {str(e)}")
@@ -38,6 +40,8 @@ async def get_walkability_hourly (
     hours: int = Query(12, description="시간 (0-12)", ge=1, le=12),
     dog_size: str = Query("medium", description="견종 크기 (small/medium/large)"),
     sensitivities: str = Query("puppy,heart_disease", description="민감군 목록 (쉼표로 구분)"),
+    coat_type: str = Query("double", description="모피 종류 (single/double)"),
+    coat_length: str = Query("long", description="모피 길이 (short/long)"),
     air_quality_type: str = Query("korean", description="대기질 기준 (korean/who)"),
     ) -> Dict[str, Any]:
     """
@@ -52,7 +56,7 @@ async def get_walkability_hourly (
     """
     try:
         logger.info(f"시간별 요청 정보: lat={lat}, lon={lon}, hours={hours}, dog_size={dog_size}, sensitivities={sensitivities}, air_quality_type={air_quality_type}")
-        walkability = await service_get_hourly(lat, lon, hours, dog_size, sensitivities, air_quality_type)
+        walkability = await service_get_hourly(lat, lon, hours, dog_size, sensitivities, coat_type, coat_length, air_quality_type)
         return success_response(data=walkability)
     except Exception as e:
         raise error_response(500, f"시간별 날씨 조회 오류: {str(e)}")
@@ -64,6 +68,8 @@ async def get_walkability_weekly (
     days: int = Query(7, description="일자 (1~7)", ge=1, le=7),
     dog_size: str = Query("medium", description="견종 크기 (small/medium/large)"),
     sensitivities: str = Query("puppy,heart_disease", description="민감군 목록 (쉼표로 구분)"),
+    coat_type: str = Query("double", description="모피 종류 (single/double)"),
+    coat_length: str = Query("long", description="모피 길이 (short/long)"),
     air_quality_type: str = Query("korean", description="대기질 기준 (korean/who)"),
     ) -> Dict[str, Any]:
     """
@@ -78,7 +84,7 @@ async def get_walkability_weekly (
     """
     try:
         logger.info(f"주간별 요청 정보: lat={lat}, lon={lon}, days={days}, dog_size={dog_size}, sensitivities={sensitivities}, air_quality_type={air_quality_type}")
-        walkability = await service_get_weekly(lat, lon, days, dog_size, sensitivities, air_quality_type)
+        walkability = await service_get_weekly(lat, lon, days, dog_size, sensitivities, coat_type, coat_length, air_quality_type)
         return success_response(data=walkability)
     except Exception as e:
         raise error_response(500, f"주간별 날씨 조회 오류: {str(e)}")

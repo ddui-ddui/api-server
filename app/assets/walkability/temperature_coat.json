@@ -1,0 +1,66 @@
+{
+  "type": {
+    "small": {
+      "single": [
+        { "min": -4, "max": 0, "grade": 1 },
+        { "min": -18, "max": -3, "grade": 2 }
+      ],
+      "double": [
+        { "min": 32, "max": 999, "grade": 2 },
+        { "min": 29, "max": 31, "grade": 1 }
+      ]
+    },
+    "medium": {
+      "single": [
+        { "min": -9, "max": 0, "grade": 1 },
+        { "min": -18, "max": -8, "grade": 2 }
+      ],
+      "double": [
+        { "min": 32, "max": 999, "grade": 2 },
+        { "min": 29, "max": 31, "grade": 1 }
+      ]
+    },
+    "large": {
+      "single": [
+        { "min": -9, "max": -6, "grade": 1 },
+        { "min": -18, "max": -8, "grade": 2 }
+      ],
+      "double": [
+        { "min": 29, "max": 999, "grade": 2 },
+        { "min": 24, "max": 28, "grade": 1 }
+      ]
+    }
+  },
+  "length": {
+    "small": {
+      "short": [
+        { "min": -4, "max": 0, "grade": 1 },
+        { "min": -18, "max": -3, "grade": 2 }
+      ],
+      "long": [
+        { "min": 32, "max": 999, "grade": 2 },
+        { "min": 29, "max": 31, "grade": 1 }
+      ]
+    },
+    "medium": {
+      "short": [
+        { "min": -9, "max": 0, "grade": 1 },
+        { "min": -18, "max": -8, "grade": 2 }
+      ],
+      "long": [
+        { "min": 32, "max": 999, "grade": 2 },
+        { "min": 29, "max": 31, "grade": 1 }
+      ]
+    },
+    "large": {
+      "short": [
+        { "min": -9, "max": -6, "grade": 1 },
+        { "min": -18, "max": -8, "grade": 2 }
+      ],
+      "long": [
+        { "min": 29, "max": 999, "grade": 2 },
+        { "min": 24, "max": 28, "grade": 1 }
+      ]
+    }
+  }
+}

@@ -1,8 +1,10 @@
 import json
 import os
 from typing import Dict, List, Any, Union, Tuple
-from app.utils.temperature_calculator import  calculate_temperature_score, calculate_temperature_sensitive_score
+from app.utils.temperature_calculator import  calculate_temperature_score, calculate_temperature_sensitive_score, calculate_temperature_coat_score
 from app.utils.airquality_calculator import calculate_air_quality_score, calculate_air_quality_sensitive_score
+from app.config.logging_config import get_logger
+logger = get_logger()
 
 class WalkabilityCalculator:     
     def calculate_walkability_score(self, 
@@ -15,33 +17,44 @@ class WalkabilityCalculator:
                                    sky_condition: int,
                                    dog_size: str = "medium",
                                    air_quality_type: str = "korean",
-                                   sensitivities: list = None) -> Dict[str, Any]:
+                                   sensitivities: list = None,
+                                   coat_type: str = "double",
+                                   coat_length: str = "long") -> Dict[str, Any]:
         # 기온 계산
         temperature_score = calculate_temperature_score(temperature, dog_size)
         # 기온 민감군 점수 계산
         temperature_sensitive_score = calculate_temperature_sensitive_score(temperature, dog_size, sensitivities)
-        temperature_final_score = temperature_score - temperature_sensitive_score
+        # 기온에 따른 모피 보정
+        temperature_coat_score = calculate_temperature_coat_score(temperature, dog_size, coat_type, coat_length)
+        temperature_final_score = temperature_score - temperature_sensitive_score - temperature_coat_score
+        logger.info(f"Temperature Score: {temperature_score}"
+              f", Temperature Sensitive Score: {temperature_sensitive_score}, "
+              f"Temperature Coat Score: {temperature_coat_score}"
+              f", Temperature Final Score: {temperature_final_score}")
 
-        
         # 대기질 계산
         air_quality_score = calculate_air_quality_score(pm10_grade, pm10_value, pm25_grade, pm25_value, air_quality_type)
         # 미세먼지 민감군 점수 계산
         air_quality_sensitive_score = calculate_air_quality_sensitive_score(pm10_grade, pm10_value, pm25_grade, pm25_value, sensitivities, air_quality_type)
         air_quality_final_score = air_quality_score - air_quality_sensitive_score  
+        logger.info(f"Air Quality Score: {air_quality_score}, "
+              f"Air Quality Sensitive Score: {air_quality_sensitive_score}, "
+              f"Air Quality Final Score: {air_quality_final_score}")
         
         combined_score = (temperature_final_score * 0.6) + (air_quality_final_score * 0.4)
+        logger.info(f"Final Score: {combined_score}")
         walkability_score = round(max(0, min(100, combined_score)))
 
         if walkability_score >= 80:
-            walkability_grade = 5
+            walkability_grade = 1
         elif walkability_score >= 60:
-            walkability_grade = 4
+            walkability_grade = 2
         elif walkability_score >= 40:
             walkability_grade = 3
         elif walkability_score >= 20:
-            walkability_grade = 2
+            walkability_grade = 4
         else:
-            walkability_grade = 1
+            walkability_grade = 5
 
         return {
             "walkability_score": walkability_score,
