@@ -139,8 +139,8 @@ def calculate_apparent_temperature(temperature: float, humidity: int = None,
         heat_index = calculate_heat_index(temperature, humidity)
         if heat_index > temperature:
             apparent_temperature = (heat_index, 1)
-    
-    return apparent_temperature
+
+    return round(apparent_temperature, 1)
 
 def calculate_heat_index(temperature: float, humidity: float) -> float:
     """

@@ -169,7 +169,9 @@ async def get_walkability_hourly(
                 weather_data=combined_data["weather"],
                 dog_size=dog_size,
                 air_quality_type=air_quality_type,
-                sensitivities=sensitivities
+                sensitivities=sensitivities,
+                coat_type=coat_type,
+                coat_length=coat_length
             )
             combined_data["walkability"] = {
                 "score": walkability_data.get("walkability_score"),
@@ -285,14 +287,18 @@ async def get_walkability_weekly(
                 combined_data["weather"], 
                 dog_size, 
                 air_quality_type,
-                sensitivities)
+                sensitivities,
+                coat_type=coat_type,
+                coat_length=coat_length)
             max_temp_result = _walkability_calculator(
                 max_temperature, 
                 0, 0, air_quality_score, 0,
                 combined_data["weather"], 
                 dog_size, 
                 air_quality_type,
-                sensitivities)
+                sensitivities,
+                coat_type=coat_type,
+                coat_length=coat_length)
 
             combined_data["walkability"] = {
                 'min_temperature': min_temp_result,
