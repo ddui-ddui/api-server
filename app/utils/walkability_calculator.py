@@ -41,7 +41,7 @@ class WalkabilityCalculator:
               f"Air Quality Sensitive Score: {air_quality_sensitive_score}, "
               f"Air Quality Final Score: {air_quality_final_score}")
         
-        combined_score = (temperature_final_score * 0.6) + (air_quality_final_score * 0.4)
+        combined_score = round((temperature_final_score * 0.6) + (air_quality_final_score * 0.4))
         logger.info(f"Final Score: {combined_score}")
         walkability_score = round(max(0, min(100, combined_score)))
 
