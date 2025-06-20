@@ -109,13 +109,13 @@ def calculate_temperature_coat_score(temperature: float, dog_size: str, coat_typ
         length_score = grade_to_score_map.get(length_grade, 0)
 
         total_score = (type_score * 0.4) + (length_score * 0.6)
-        return int(total_score * 3)
+        return int(total_score * 2)
     elif type_grade is not None:
         type_score = grade_to_score_map.get(type_grade, 0)
-        return int(type_score * 3)
+        return int(type_score * 2)
     elif length_grade is not None:
         length_score = grade_to_score_map.get(length_grade, 0)
-        return int(length_score * 3)
+        return int(length_score * 2)
     else:
         return 0
 
