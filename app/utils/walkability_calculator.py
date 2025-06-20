@@ -1,10 +1,12 @@
 import json
-import os
-from typing import Dict, List, Any, Union, Tuple
+from typing import Dict, Any
 from app.utils.temperature_calculator import  calculate_temperature_score, calculate_temperature_sensitive_score, calculate_temperature_coat_score
 from app.utils.airquality_calculator import calculate_air_quality_score, calculate_air_quality_sensitive_score
+from app.utils.load_to_json import load_json_data
 from app.config.logging_config import get_logger
 logger = get_logger()
+
+OOTD_TEMPERATURE = load_json_data('ootd_sentence.json', 'app', 'assets', 'walkability')
 
 class WalkabilityCalculator:     
     def calculate_walkability_score(self, 
@@ -61,22 +63,23 @@ class WalkabilityCalculator:
             "walkability_grade": walkability_grade,
         }
     
-    def _convert_score_to_deduction(self, score: int, max_deduction: float) -> float:
+    def get_ootd_by_temperature(self, temperature: float, dog_size: str = "medium") -> Dict[str, Any]:
         """
-        점수(1-5)를 차감 점수로 변환
-        :param score: 1-5 사이의 점수 (1이 가장 좋음, 5가 가장 나쁨)
-        :param max_deduction: 최대 차감 점수
-        :return: 차감할 점수 (음수)
+        기온에 따른 OOTD 계산
+        :param temperature: 현재 기온
+        :param dog_size: 개 사이즈 (small, medium, large)
+        :return: OOTD 정보
         """
-        if score == 1:
-            return 0  # 최적 상태는 차감 없음
-        elif score == 2:
-            return max_deduction * 0.25  # 최대 차감의 25%
-        elif score == 3:
-            return max_deduction * 0.5   # 최대 차감의 50%
-        elif score == 4:
-            return max_deduction * 0.75  # 최대 차감의 75%
-        elif score == 5:
-            return max_deduction         # 최대 차감
-        else:
-            return 0  # 기본값
+        ootd_data = OOTD_TEMPERATURE.get(dog_size, {})
+        ootd_info = None
+        
+        for ootd in ootd_data:
+            if ootd["min"] <= temperature <= ootd["max"]:
+                ootd_info = ootd
+                break
+        logger.info(f"OOTD Info: {ootd_info}")
+        
+        return {
+            "clothing": ootd_info["clothing"],
+            "phrases": ootd_info["phrases"]
+        }

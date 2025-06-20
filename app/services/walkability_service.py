@@ -65,6 +65,13 @@ async def get_walkability_current(
             "score": 50  # 중간 값으로 기본 설정
         }
     
+    # ootd 및 문구 조회
+    ootd_info = walkability_calculator.get_ootd_by_temperature(
+        temperature=weather_data["temperature"],
+        dog_size=dog_size
+    )
+    results["description"] = ootd_info
+    
     return {"forecasts": results}
 
 async def get_walkability_hourly(
