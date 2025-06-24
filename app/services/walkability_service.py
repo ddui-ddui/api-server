@@ -23,6 +23,7 @@ async def get_walkability_current(
     
     results = {}
     # 현재 날씨 조회
+    print("1")
     fields = ["temperature", "precipitation_type", "sky_condition", "min_temperature", "max_temperature", "previous_temperature", "temperature_difference", "uv_index", "lightning"]
     weather_data = await get_ultra_short_forecast(lat, lon, fields)
     if not weather_data:
@@ -30,7 +31,7 @@ async def get_walkability_current(
         raise HTTPException(status_code=404, detail="날씨 정보를 찾을 수 없습니다.")
     
     results["weather"] = weather_data
-    
+    print("2")
     # 현재 대기질 정보 조회
     air_quality_data = await get_current_air_quality(lat, lon, air_quality_type)
     if not air_quality_data:

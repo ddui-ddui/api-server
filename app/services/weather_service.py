@@ -202,7 +202,7 @@ async def get_ultra_short_forecast(lat: float, lon: float, fields: List[str] = N
                 except Exception as e:
                     logger.error(f"최고/최저 기온 조회 오류: {str(e)}")
                     raise HTTPException(status_code=500, detail="날씨 정보 조회 중 오류가 발생했습니다")
-            
+
             # 전날 날씨 데이터 조회 및 기온 차이 계산
             if fields is None or "previous_temperature" in fields or "temperature_difference" in fields:
                 prev_weather = await get_previous_weather(lat, lon, base_date, base_time)
@@ -384,13 +384,22 @@ async def get_daily_temperature_range(nx: float, ny: float) -> Dict[str, Any]:
     today = now.strftime("%Y%m%d")
     tomorrow = (now + timedelta(days=1)).strftime("%Y%m%d")
     
-    # 최저/최고 기온은 주로 02시 발표 자료에 포함됨
-    base_time = "0200"
-    base_date = today
+    # 단기예보는 매일 새벽 5시에 한 번만 발표
+    current_hour = now.hour
+    current_minute = now.minute
+    
+    # 0500에 바로 업데이트가 되지 않기 때문에 30분 보호
+    if current_hour < 5 or (current_hour == 5 and current_minute < 30):
+        yesterday = now - timedelta(days=1)
+        base_date = yesterday.strftime("%Y%m%d")
+        base_time = "0500"
+    else:
+        base_date = today
+        base_time = "0500"
     
     # 단기예보 API URL
     url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_WEATHER_SHORT_URL}"
-    
+
     params = {
         "serviceKey": unquote(settings.GOV_DATA_API_KEY),
         "numOfRows": 1000,
