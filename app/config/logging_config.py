@@ -78,7 +78,7 @@ def setup_logging():
         
         file_handler = logging.handlers.TimedRotatingFileHandler(
             filename=f"{log_dir}/app_{current_date}.log",
-            when="H", # 매일 자정
+            when="midnight", # 매일 자정
             interval=1, # 1일마다 새 로그 파일 생성
             backupCount=30,  # 30일간 보관
             encoding="utf-8"
