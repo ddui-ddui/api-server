@@ -38,7 +38,7 @@ async def get_sunrise_sunset(lat: float, lon: float, retry_days:int = 0) -> dict
     url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_ASTRONOMY_SUN_URL}"
 
     try:
-        response = await make_request(url=url, params=params)
+        response = await make_request(url=url, params=params, response_format="xml")
         response.raise_for_status()
         response_text = response.text
         
