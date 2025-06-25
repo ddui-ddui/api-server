@@ -29,9 +29,8 @@ async def get_walkability_current(
     if not weather_data:
         logger.error(f"날씨 정보 조회 실패: lat={lat}, lon={lon}")
         raise HTTPException(status_code=404, detail="날씨 정보를 찾을 수 없습니다.")
-    
+        
     results["weather"] = weather_data
-    print("2")
     # 현재 대기질 정보 조회
     air_quality_data = await get_current_air_quality(lat, lon, air_quality_type)
     if not air_quality_data:
@@ -62,14 +61,16 @@ async def get_walkability_current(
         }
     except Exception as e:
         logger.error(f"산책 적합도 점수 계산 실패: {str(e)}")
-        results["walkability_score"] = {
-            "score": 50  # 중간 값으로 기본 설정
+        results["walkability"] = {
+            "score": "N/A",
+            "grade": -1
         }
     
     # ootd 및 문구 조회
     ootd_info = walkability_calculator.get_ootd_by_temperature(
-        temperature=weather_data["temperature"],
-        dog_size=dog_size
+        weather_data=weather_data,
+        walkability_grade=results["walkability"]["grade"],
+        dog_size=dog_size,
     )
     results["description"] = ootd_info
     
