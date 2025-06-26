@@ -4,7 +4,7 @@ import os
 import re
 from app.core.config import settings
 from app.config.context import request_id, client_ip
-from datetime import datetime
+from app.common.logging_file_handler import create_daily_rotating_handler
 
 class ContextFormatter(logging.Formatter):
     def __init__(self, *args, **kwargs):
@@ -73,15 +73,12 @@ def setup_logging():
         log_dir = "logs"
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
-
-        current_date = datetime.now().strftime("%Y%m%d")
         
-        file_handler = logging.handlers.TimedRotatingFileHandler(
-            filename=f"{log_dir}/app_{current_date}.log",
-            when="midnight", # 매일 자정
-            interval=1, # 1일마다 새 로그 파일 생성
-            backupCount=30,  # 30일간 보관
-            encoding="utf-8"
+        file_handler = create_daily_rotating_handler(
+            log_dir="logs",
+            filename="app.log",
+            max_size_mb=5,      # 20MB마다 로테이션
+            backup_count=50      # 30개 파일 보관
         )
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
