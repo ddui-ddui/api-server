@@ -77,8 +77,8 @@ def setup_logging():
         file_handler = create_daily_rotating_handler(
             log_dir="logs",
             filename="app.log",
-            max_size_mb=5,      # 20MB마다 로테이션
-            backup_count=50      # 30개 파일 보관
+            max_size_mb=20,
+            backup_count=50
         )
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)

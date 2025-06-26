@@ -61,7 +61,8 @@ class DailyRotatingWithSizeHandler(logging.handlers.TimedRotatingFileHandler):
         
         return max_seq + 1
     
-    def shouldRollover(self, record):
+    def shouldRollover(self, record: logging.LogRecord) -> bool:
+        """오버라이딩: 롤오버 조건 체크"""
         """시간 또는 크기 조건 체크"""
         # 시간 기반 롤오버 체크 (자정)
         time_rollover = super().shouldRollover(record)
@@ -76,6 +77,7 @@ class DailyRotatingWithSizeHandler(logging.handlers.TimedRotatingFileHandler):
         return time_rollover or size_rollover
     
     def doRollover(self):
+        """오버라이딩: 롤오버 실행"""
         """롤오버 실행"""
         if self.stream:
             self.stream.close()
