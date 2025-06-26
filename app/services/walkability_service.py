@@ -1,3 +1,4 @@
+import datetime
 from typing import Any, Dict
 
 from fastapi import HTTPException
@@ -23,19 +24,29 @@ async def get_walkability_current(
     
     results = {}
     # 현재 날씨 조회
-    print("1")
     fields = ["temperature", "precipitation_type", "sky_condition", "min_temperature", "max_temperature", "previous_temperature", "temperature_difference", "uv_index", "lightning"]
-    weather_data = await get_ultra_short_forecast(lat, lon, fields)
-    if not weather_data:
-        logger.error(f"날씨 정보 조회 실패: lat={lat}, lon={lon}")
-        raise HTTPException(status_code=404, detail="날씨 정보를 찾을 수 없습니다.")
+    try:
+        weather_data = await get_ultra_short_forecast(lat, lon, fields)
+        if not weather_data:
+            raise HTTPException(status_code=404, detail="날씨 정보를 찾을 수 없습니다.")
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        logger.error(f"날씨 정보 조회 중 예상치 못한 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail="날씨 서비스 오류")
         
     results["weather"] = weather_data
+
     # 현재 대기질 정보 조회
-    air_quality_data = await get_current_air_quality(lat, lon, air_quality_type)
-    if not air_quality_data:
-        logger.error(f"대기질 정보 조회 실패: lat={lat}, lon={lon}")
-        raise HTTPException(status_code=404, detail="대기질 정보를 찾을 수 없습니다.")
+    try:
+        air_quality_data = await get_current_air_quality(lat, lon, air_quality_type)
+        if not air_quality_data:
+            raise HTTPException(status_code=404, detail="대기질 정보를 찾을 수 없습니다.")
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        logger.error(f"대기질 정보 조회 중 예상치 못한 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail="대기질 서비스 오류")
     
     results["air_quality"] = air_quality_data
 
@@ -102,20 +113,26 @@ async def get_walkability_hourly(
     # 시간별 날씨 정보 조회
     try:
         weather_data = await get_hourly_forecast(lat, lon, hours)
+        if not weather_data:
+            logger.error(f"날씨 정보 조회 실패: lat={lat}, lon={lon}")
+            raise HTTPException(status_code=404, detail="날씨 정보를 찾을 수 없습니다.")
+    except HTTPException as e:
+        raise
     except Exception as e:
-        logger.error(f"시간별 날씨 조회 실패: {str(e)}")
-        raise HTTPException(status_code=404, detail="날씨 정보를 찾을 수 없습니다.")
-    
-    if not weather_data:
-        logger.error(f"날씨 정보 조회 실패: lat={lat}, lon={lon}")
-        raise HTTPException(status_code=404, detail="날씨 정보를 찾을 수 없습니다.")
+        logger.error(f"시간별 날씨 조회 중 예상치 못한 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail="날씨 서비스 오류")
     
     # 시간별 대기질 정보 조회
     try:
         airquality_data = await get_hourly_air_quality(lat, lon, hours)
+        if not airquality_data:
+            logger.error(f"대기질 정보 조회 실패: lat={lat}, lon={lon}")
+            raise HTTPException(status_code=404, detail="대기질 정보를 찾을 수 없습니다.")
+    except HTTPException as e:
+        raise
     except Exception as e:
-        logger.error(f"시간별 대기질 조회 실패: {str(e)}")
-        raise HTTPException(status_code=404, detail="대기질 정보를 찾을 수 없습니다.")
+        logger.error(f"시간별 대기질 조회 중 예상치 못한 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail="대기질 서비스 오류")
 
     weather_forecasts = weather_data.get("forecasts", [])
     air_forecasts = airquality_data.get("forecasts", [])
@@ -188,8 +205,9 @@ async def get_walkability_hourly(
             }
         except Exception as e:
             logger.error(f"산책 적합도 점수 계산 실패: {str(e)}")
-            combined_data["walkability_score"] = {
-                "score": 50  # 중간 값으로 기본 설정
+            combined_data["walkability"] = {
+                "score": "N/A",
+                "grade": -1
             }
        
         combined_forecasts.append(combined_data)
@@ -227,24 +245,26 @@ async def get_walkability_weekly(
     # 시간별 날씨 정보 조회
     try:
         weather_data = await get_weekly_forecast(lat, lon, days)
+        if not weather_data:
+            logger.error(f"날씨 정보 조회 실패: lat={lat}, lon={lon}")
+            raise HTTPException(status_code=404, detail="날씨 정보를 찾을 수 없습니다.")
+    except HTTPException as e:
+        raise
     except Exception as e:
-        logger.error(f"주간별 날씨 조회 실패: {str(e)}")
-        raise HTTPException(status_code=404, detail="날씨 정보를 찾을 수 없습니다.")
-    
-    if not weather_data:
-        logger.error(f"날씨 정보 조회 실패: lat={lat}, lon={lon}")
-        raise HTTPException(status_code=404, detail="날씨 정보를 찾을 수 없습니다.")
+        logger.error(f"주간별 날씨 조회 중 예상치 못한 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail="주간별 날씨 서비스 오류")
     
     # 시간별 대기질 정보 조회
     try:
         airquality_data = await get_weekly_air_quality(lat, lon, air_quality_type, days)
+        if not airquality_data:
+            logger.error(f"대기질 정보 조회 실패: lat={lat}, lon={lon}")
+            raise HTTPException(status_code=404, detail="대기질 정보를 찾을 수 없습니다.")
+    except HTTPException as e:
+        raise
     except Exception as e:
-        logger.error(f"주간별 대기질 조회 실패: {str(e)}")
-        raise HTTPException(status_code=404, detail="대기질 정보를 찾을 수 없습니다.")
-    
-    if not airquality_data:
-        logger.error(f"대기질 정보 조회 실패: lat={lat}, lon={lon}")
-        raise HTTPException(status_code=404, detail="대기질 정보를 찾을 수 없습니다.")
+        logger.error(f"주간별 대기질 조회 중 예상치 못한 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail="주간별 대기질 정보 서비스 오류")
     
     weather_forecasts = weather_data.get("forecasts", [])
     air_forecasts = airquality_data.get("forecasts", [])
@@ -315,8 +335,14 @@ async def get_walkability_weekly(
             }
         except Exception as e:
             logger.error(f"산책 적합도 점수 계산 실패: {str(e)}")
-            combined_data["walkability_score"] = {
-                "score": 50  # 중간 값으로 기본 설정
+            # 산책 적합도 계산 실패 시 기본값 설정
+            walkability_default = {
+                "score": "N/A",
+                "grade": -1
+            }
+            combined_data["walkability"] = {
+                'min_temperature': walkability_default,
+                'max_temperature': walkability_default
             }
        
         combined_forecasts.append(combined_data)
@@ -335,24 +361,26 @@ async def get_walkability_current_detail(
     fields = ["temperature", "humidity", "wind_speed", "rainfall"]
     try:
         weather_data = await get_ultra_short_forecast(lat, lon, fields)
+        if not weather_data:
+            logger.error(f"현재 날씨 상세 정보 조회 실패: lat={lat}, lon={lon}")
+            raise HTTPException(status_code=404, detail="현재 날씨 정보를 찾을 수 없습니다.")
+    except HTTPException as e:
+        raise
     except Exception as e:
-        logger.error(f"현재 날씨 상세 정보 조회 실패: {str(e)}")
-        raise HTTPException(status_code=404, detail="현재 날씨 정보를 찾을 수 없습니다.")
-    
-    if not weather_data:
-        logger.error(f"현재 정보 조회 실패: lat={lat}, lon={lon}")
-        raise HTTPException(status_code=404, detail="현재 날씨 정보를 찾을 수 없습니다.")
+        logger.error(f"현재 날씨 상세 정보 조회 중 예상치 못한 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail="현재 상세 날씨 서비스 오류")
 
     # 오늘 일출 일몰 시간 조회
     try:
         astronomy_data = await get_sunrise_sunset(lat, lon)
+        if not astronomy_data:
+            logger.error(f"일출/일몰 정보 조회 실패: lat={lat}, lon={lon}")
+            raise HTTPException(status_code=404, detail="천문 정보를 찾을 수 없습니다.")
+    except HTTPException as e:
+        raise
     except Exception as e:
-        logger.error(f"일출/일몰 정보 조회 실패: {str(e)}")
-        raise HTTPException(status_code=404, detail="천문 정보를 찾을 수 없습니다.")
-    
-    if not astronomy_data:
-        logger.error(f"일출/일몰 정보 조회 실패: lat={lat}, lon={lon}")
-        raise HTTPException(status_code=404, detail="천문 정보를 찾을 수 없습니다.")
+        logger.error(f"일출/일몰 정보 조회 중 예상치 못한 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail="일출/일몰 서비스 오류")
 
     weather_data["sunrise"] = astronomy_data["sunrise"]
     weather_data["sunset"] = astronomy_data["sunset"]
@@ -367,9 +395,14 @@ async def get_walkability_current_detail(
     # 현재 자외선 지수 조회
     try:
         uv_data =  await get_weather_uvindex(lat, lon)
+        if uv_data is None:
+            logger.error(f"자외선 지수 조회 실패: lat={lat}, lon={lon}")
+            raise HTTPException(status_code=404, detail="자외선 지수를 찾을 수 없습니다.")
+    except HTTPException as e:
+        raise
     except Exception as e:
-        logger.error(f"자외선 지수 조회 실패: {str(e)}")
-        raise HTTPException(status_code=404, detail="자외선 지수를 찾을 수 없습니다.")
+        logger.error(f"자외선 지수 조회 중 예상치 못한 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail="자외선 지수 서비스 오류")
     
     weather_data["uv_index"] = uv_data
     

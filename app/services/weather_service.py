@@ -1,4 +1,3 @@
-import httpx
 from fastapi import HTTPException
 from app.core.config import settings
 from typing import Any, Dict, List
@@ -44,14 +43,8 @@ async def get_previous_weather(lat: float, lon: float, current_date: str, curren
         
             url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_WEATHER_SEARCH_PREV_URL}"
             response = await make_request(url=url, params=params)
-            response.raise_for_status()
             data = response.json()
 
-            response_code = data.get("response", {}).get("header", {}).get("resultCode")
-            if response_code != "00":
-                response_msg = data.get("response", {}).get("header", {}).get("resultMsg", "Unknown error")
-                logger.info(f"관측소 {station['reg_id']} API 오류: {response_msg}")
-                continue
             items = data.get("response", {}).get("body", {}).get("items", {}).get("item", [])
 
             if not items:
@@ -97,20 +90,18 @@ async def get_previous_weather(lat: float, lon: float, current_date: str, curren
                 
                 yesterday_temp = closest_temp
 
+
             if yesterday_temp is not None:
                 return yesterday_temp
             else:
                 logger.info(f"관측소: {station['reg_id']} 지역: {station['region']} 기상관측소: {station['meteorological']}: 유효한 온도 데이터 없음")
                 continue
             
-        except httpx.HTTPStatusError as e:
-            logger.error(f"관측소: {station['reg_id']} 지역: {station['region']} 기상관측소: {station['meteorological']} HTTP 오류 (Status {e.response.status_code}): {e.response.text}")
-            continue
-        except httpx.RequestError as e:
-            logger.error(f"관측소: {station['reg_id']} 지역: {station['region']} 기상관측소: {station['meteorological']} 연결 오류: {str(e)}")
+        except HTTPException as e:
+            logger.warning(f"관측소 {station['reg_id']} ({station['region']}) API 오류: {e.detail}")
             continue
         except Exception as e:
-            logger.error(f"관측소: {station['reg_id']} 지역: {station['region']} 기상관측소: {station['meteorological']} 예상치 못한 오류: {str(e)}")
+            logger.warning(f"관측소 {station['reg_id']} ({station['region']}) 예상치 못한 오류: {str(e)}")
             continue
 
     logger.error("모든 관측소에서 어제 온도 데이터를 가져올 수 없습니다.")
@@ -152,16 +143,7 @@ async def get_ultra_short_forecast(lat: float, lon: float, fields: List[str] = N
     
     try:
             response = await make_request(url=url, params=params)
-            response.raise_for_status()
             data = response.json()
-
-            # 응답 코드 확인
-            response_code = data.get("response", {}).get("header", {}).get("resultCode")
-            if response_code != "00":
-                response_msg = data.get("response", {}).get("header", {}).get("resultMsg", "Unknown error")
-                logger.error(f"초단기 예보 API Response Code: {response_code}")
-                logger.error(f"초단기 예보 API 오류: {response_msg}")
-                raise HTTPException(status_code=500, detail=f"초단기 예보 API 오류: {response_msg}")
             
             # 결과 데이터 추출
             items = data.get("response", {}).get("body", {}).get("items", {}).get("item", [])
@@ -199,13 +181,22 @@ async def get_ultra_short_forecast(lat: float, lon: float, fields: List[str] = N
                     daily_temperature = await get_daily_temperature_range(nx, ny)
                     all_data['min_temperature'] = float(daily_temperature.get("min_temperature", 0))
                     all_data['max_temperature'] = float(daily_temperature.get("max_temperature", 0))
+                except HTTPException:
+                    raise
                 except Exception as e:
-                    logger.error(f"최고/최저 기온 조회 오류: {str(e)}")
-                    raise HTTPException(status_code=500, detail="날씨 정보 조회 중 오류가 발생했습니다")
+                    logger.error(f"최고/최저 기온 조회 중 예상치 못한 오류: {str(e)}")
+                    raise HTTPException(status_code=500, detail="최고/최저 기온 조회 오류")
 
             # 전날 날씨 데이터 조회 및 기온 차이 계산
             if fields is None or "previous_temperature" in fields or "temperature_difference" in fields:
-                prev_weather = await get_previous_weather(lat, lon, base_date, base_time)
+                try:
+                    prev_weather = await get_previous_weather(lat, lon, base_date, base_time)
+                except HTTPException as e:
+                    raise
+                except Exception as e:
+                    logger.error(f"전날 날씨 조회 중 오류: {str(e)}")
+                    raise HTTPException(status_code=500, detail="전날 날씨 조회 오류")
+                
                 current_temperature = all_data['temperature']
 
                 if prev_weather is not None:                    
@@ -230,12 +221,11 @@ async def get_ultra_short_forecast(lat: float, lon: float, fields: List[str] = N
                 return result
             else:
                 return {field: all_data[field] for field in fields if field in all_data}
-    except httpx.HTTPStatusError as e:
-        raise HTTPException(status_code=e.response.status_code, detail=f"초단기 예보 API 오류: {e.response.text}")
-    except httpx.RequestError as e:
-        raise HTTPException(status_code=503, detail=f"기상청 API 서비스에 연결할 수 없습니다: {str(e)}")
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"날씨 데이터 처리 오류: {str(e)}")
+        logger.error(f"초단기 예보 조회 중 예상치 못한 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail="초단기 날씨 서비스 오류")
 
 async def get_hourly_forecast(lat: float, lon: float, hours: int = 12) -> Dict[str, Any]:
     """
@@ -287,16 +277,7 @@ async def get_hourly_forecast(lat: float, lon: float, hours: int = 12) -> Dict[s
     }
     try:
         response = await make_request(url=url, params=params)
-        response.raise_for_status()
         data = response.json()
-        response_code = data.get("response", {}).get("header", {}).get("resultCode")
-
-        # 응답 코드 확인
-        if response_code != "00":
-            response_msg = data.get("response", {}).get("header", {}).get("resultMsg", "Unknown error")
-            logger.error(f"단기예보 API Response Code: {response_code}")
-            logger.error(f"단기예보 API 오류: {response_msg}")
-            raise HTTPException(status_code=500, detail=f"단기예보 API 오류: {response_msg}")
         
         items = data.get("response", {}).get("body", {}).get("items", {}).get("item", [])
         
@@ -364,12 +345,11 @@ async def get_hourly_forecast(lat: float, lon: float, hours: int = 12) -> Dict[s
         }
         return result
             
-    except httpx.HTTPError as e:
-        raise HTTPException(status_code=500, detail=f"단기예보 API 오류: {str(e)}")
-    except httpx.RequestError as e:
-        raise HTTPException(status_code=503, detail=f"단기예보 API 서비스에 연결할 수 없습니다: {str(e)}")
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"시간별 단기예보 날씨 데이터 처리 오류: {str(e)}")
+        logger.error(f"시간별 예보 조회 중 예상치 못한 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail="시간별 날씨 서비스 오류")
     
 async def get_daily_temperature_range(nx: float, ny: float) -> Dict[str, Any]:
     """
@@ -413,16 +393,7 @@ async def get_daily_temperature_range(nx: float, ny: float) -> Dict[str, Any]:
     
     try:
         response = await make_request(url=url, params=params)
-        response.raise_for_status()
         data = response.json()
-        
-        # 응답 코드 확인
-        response_code = data.get("response", {}).get("header", {}).get("resultCode")
-        if response_code != "00":
-            response_msg = data.get("response", {}).get("header", {}).get("resultMsg", "Unknown error")
-            logger.error(f"단기예보 API Response Code: {response_code}")
-            logger.error(f"단기예보 API 오류: {response_msg}")
-            raise HTTPException(status_code=500, detail=f"초단기 예보 API 오류: {response_msg}")
         
         # 결과 데이터 추출
         items = data.get("response", {}).get("body", {}).get("items", {}).get("item", [])
@@ -482,12 +453,11 @@ async def get_daily_temperature_range(nx: float, ny: float) -> Dict[str, Any]:
         
         return result
             
-    except httpx.HTTPError as e:
-        raise HTTPException(status_code=500, detail=f"단기예보 API 오류: {str(e)}")
-    except httpx.RequestError as e:
-        raise HTTPException(status_code=503, detail=f"단기예보 API 서비스에 연결할 수 없습니다: {str(e)}")
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"날씨 데이터 처리 오류: {str(e)}")
+        logger.error(f"최고/최저 기온 조회 중 예상치 못한 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail="기온 조회 서비스 오류")
     
 async def get_weekly_forecast(lat: float, lon: float, days: int = 7) -> Dict[str, Any]:
     """
@@ -638,16 +608,7 @@ async def get_short_range_forecast(nx: int, ny: int) -> List[Dict[str, Any]]:
     }
     
     response = await make_request(url=url, params=params)
-    response.raise_for_status()
     data = response.json()
-
-    # 응답 코드 확인
-    response_code = data.get("response", {}).get("header", {}).get("resultCode")
-    if response_code != "00":
-        response_msg = data.get("response", {}).get("header", {}).get("resultMsg", "Unknown error")
-        logger.error(f"주간용 단기 예보 API Response Code: {response_code}")
-        logger.error(f"주간용 단기 예보 API 오류: {response_msg}")
-        raise HTTPException(status_code=500, detail=f"주간용 단기 예보 API 오류: {response_msg}")
     
     # 응답 처리
     items = data.get("response", {}).get("body", {}).get("items", {}).get("item", [])
@@ -729,22 +690,6 @@ async def get_mid_range_forecast(nx: int, ny: int) -> List[Dict[str, Any]]:
     
     temp_data = temp_response.json()
     weather_data = weather_response.json()
-
-    # 응답 코드 확인
-    temp_response_code = temp_data.get("response", {}).get("header", {}).get("resultCode")
-    weather_response_code = weather_data.get("response", {}).get("header", {}).get("resultCode")
-
-    if temp_response_code != "00":
-        temp_response_msg = temp_data.get("response", {}).get("header", {}).get("resultMsg", "Unknown error")
-        logger.error(f"중기예보 온도 API Response Code: {temp_response_code}")
-        logger.error(f"중기예보 온도 API 오류: {temp_response_msg}")
-        raise HTTPException(status_code=500, detail=f"중기예보 온도 API 오류: {temp_response_msg}")
-    
-    if weather_response_code != "00":
-        weather_response_msg = weather_data.get("response", {}).get("header", {}).get("resultMsg", "Unknown error")
-        logger.error(f"중기예보 날씨 API Response Code: {weather_response_code}")
-        logger.error(f"중기예보 날씨 API 오류: {weather_response_msg}")
-        raise HTTPException(status_code=500, detail=f"중기예보 날씨 API 오류: {weather_response_msg}")
     
     # 데이터 추출
     temp_items = temp_data.get("response", {}).get("body", {}).get("items", {}).get("item", [])
@@ -820,19 +765,12 @@ async def get_weather_uvindex(lat: float, lon: float) -> int:
 
     try:
         response = await make_request(url=url, params=params)
-        response.raise_for_status()
         data = response.json()
 
-        response_code = data.get("response", {}).get("header", {}).get("resultCode")
-        if response_code != "00":
-            response_msg = data.get("response", {}).get("header", {}).get("resultMsg", "Unknown error")
-            logger.error(f"생활지수 조회 API Response Code: {response_code}")
-            logger.error(f"생활지수 조회 API 오류: {response_msg}")
-            raise HTTPException(status_code=500, detail=f"생활지수 조회 API 오류: {response_msg}")
-        
         items = data.get("response", {}).get("body", {}).get("items", {}).get("item", [])
         if not items:
-            raise HTTPException(status_code=404, detail="자외선 지수 정보를 찾을 수 없습니다.")
+            logger.error("자외선 지수 정보를 찾을 수 없습니다.")
+            raise HTTPException(status_code=500, detail="자외선 지수 정보를 찾을 수 없습니다.")
         
         uv_data = items[0]
             
@@ -855,17 +793,12 @@ async def get_weather_uvindex(lat: float, lon: float) -> int:
                 if hour_diff < min_hour_diff:
                     min_hour_diff = hour_diff
                     best_uv_index = uv_value
-
         try:
             return int(float(best_uv_index)) if best_uv_index and best_uv_index.strip() != "" else 0
         except (ValueError, AttributeError):
             return 0
-    except httpx.HTTPStatusError as e:
-        logger.info(f"생활지수 조회 API 오류: {e.response.text}")
-        return {"yesterday_temp": None, "temp_diff": None}
-    except httpx.RequestError as e:
-        logger.info(f"생활지수 조회 API 연결 오류: {str(e)}")
-        return {"yesterday_temp": None, "temp_diff": None}
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.info(f"생활지수 조회 오류: {str(e)}")
-        return {"yesterday_temp": None, "temp_diff": None}
+        logger.error(f"자외선 지수 조회 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"자외선 지수 조회 오류: {str(e)}")

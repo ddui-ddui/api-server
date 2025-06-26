@@ -60,7 +60,6 @@ async def find_nearby_air_quality_station(lat: float, lon: float) -> Optional[Li
     
     try:
         response = await make_request(url=url, params=params)
-        response.raise_for_status()
         data = response.json()
         
         # 응답 확인
@@ -106,7 +105,6 @@ async def get_air_quality_data(stations: List[str], air_quality_type: str = 'kor
         
         try:
             response = await make_request(url=url, params=params)
-            response.raise_for_status()
             data = response.json()
             
             # 응답 확인
@@ -250,7 +248,6 @@ async def get_hourly_air_quality(lat: float, lon: float, hours: int = 12) -> Dic
     
     try:
         response = await make_request(url=url, params=params)
-        response.raise_for_status()
         data = response.json()
         items = data.get("response", {}).get("body", {}).get("items", [])
         if not items:
@@ -371,7 +368,6 @@ async def get_weekly_air_quality(lat: float, lon: float, air_quality_type: str, 
         url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_AIRQUALITY_WEEKLY_URL}"
         
         response = await make_request(url=url, params=params)
-        response.raise_for_status()
         data = response.json()
         items = data.get("response", {}).get("body", {}).get("items", [])
         

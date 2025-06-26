@@ -100,7 +100,7 @@ async def make_request(
         #     response = await client.delete(url, params=params, headers=headers)
         else:
             raise ValueError(f"Unsupported HTTP method: {method}")
-        
+        logger.info(f"Low Json Data: {response.text}")
         if response_format.lower() == "json":
             try:
                 data = response.json()
