@@ -306,6 +306,19 @@ async def get_hourly_forecast(lat: float, lon: float, hours: int = 12) -> Dict[s
                 forecasts_by_time[key]["precipitation_type"] = int(value)
             elif category == "SKY":  # 하늘상태 (1:맑음, 3:구름많음, 4:흐림)
                 forecasts_by_time[key]["sky_condition"] = int(value)
+            elif category == "POP":  # 강수확률
+                print(f"POP: {value}")
+                forecasts_by_time[key]["precipitation_probability"] = int(value)
+            # elif category == "PCP": # 강수량
+            #     amount = float(value)
+            #     if amount >= 0.1 and amount < 1.0:
+            #         forecasts_by_time[key]["precipitation_amount"] = f"{1}mm 미만"
+            #     elif amount >= 1.0 and amount < 30.0:
+            #         forecasts_by_time[key]["precipitation_amount"] = f"{value}mm"
+            #     elif amount >= 30.0 and amount < 50.0:
+            #         forecasts_by_time[key]["precipitation_amount"] = f"30mm~50mm"
+            #     elif amount >= 50.0:
+            #         forecasts_by_time[key]["precipitation_amount"] = f"50mm 이상"
         
         future_forecasts = {}
         for key, forecast in forecasts_by_time.items():
@@ -324,7 +337,7 @@ async def get_hourly_forecast(lat: float, lon: float, hours: int = 12) -> Dict[s
         for key in sorted_keys:
             forecast = forecasts_by_time[key]
             # 필수 필드 확인
-            required_fields = ["temperature", "sky_condition", "precipitation_type"]
+            required_fields = ["temperature", "sky_condition", "precipitation_type", "precipitation_probability"]
         
             if all(field in forecast for field in required_fields):
                 # 날짜 형식 정리

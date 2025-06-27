@@ -61,6 +61,12 @@ else:
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
+    global logger
+
+    if logger is None:
+        logger = setup_logging()
+        logger.warning("로거가 미들웨어에서 늦게 초기화됨")
+    
     start_time = time.time()
     req_id_value = str(uuid.uuid4())[:8]
     
@@ -79,14 +85,23 @@ async def log_requests(request: Request, call_next):
     client_ip.set(client_ip_value)
     user_agent.set(user_agent_value)
     
-    # 요청 로깅
-    logger.info(f"Request: {request.method} {request.url.path}")
-    
-    response = await call_next(request)
-    
-    # 응답 시간 로깅
-    process_time = time.time() - start_time
-    logger.info(f"Response: {response.status_code} - {process_time:.4f}s")
+    try:
+        # 요청 로깅
+        logger.info(f"Request: {request.method} {request.url.path}")
+        
+        response = await call_next(request)
+        
+        # 응답 시간 로깅
+        process_time = time.time() - start_time
+        logger.info(f"Response: {response.status_code} - {process_time:.4f}s")
+        
+        return response
+        
+    except Exception as e:
+        # 에러 발생 시에도 로깅
+        process_time = time.time() - start_time
+        logger.error(f"Request failed: {request.method} {request.url.path} - {str(e)} - {process_time:.4f}s")
+        raise
     
     return response
 

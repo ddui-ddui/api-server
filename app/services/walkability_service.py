@@ -162,7 +162,8 @@ async def get_walkability_hourly(
             "weather": {
                 "temperature": weather.get("temperature"),
                 "precipitation_type": weather.get("precipitation_type"),
-                "sky_condition": weather.get("sky_condition")
+                "sky_condition": weather.get("sky_condition"),
+                "precipitation_probability": weather.get("precipitation_probability")
             }
         }
         

@@ -6,6 +6,8 @@ from app.core.config import settings
 from app.config.context import request_id, client_ip
 from app.common.logging_file_handler import create_daily_rotating_handler
 
+_logging_initialized = False
+
 class ContextFormatter(logging.Formatter):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -55,9 +57,13 @@ def get_logger(name="DDUI-DDUI"):
 
 def setup_logging():
 
+    global _logging_initialized
+    
+    # 이미 초기화되었으면 기존 로거 반환
+    if _logging_initialized:
+        return logging.getLogger("DDUI-DDUI")
+    
     logger = logging.getLogger("DDUI-DDUI")
-    if logger.handlers:
-        return logger
 
     
     log_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
@@ -88,5 +94,7 @@ def setup_logging():
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
+
+    _logging_initialized = True
     
     return logger
