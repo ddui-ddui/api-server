@@ -86,9 +86,9 @@ class WalkabilityCalculator:
         phrases = None
 
         for ootd in ootd_data:
-            # 비오면 무조건 우비
+            # 비오면 무조건 우비(타입 배열)
             if weather_data["precipitation_type"] in RAIN_PRECIPITATION_TYPES:
-                ootd = "우비"
+                ootd = ["우비"]
                 break
             
             # 그게 아니라면 기온에 따라 OOTD 결정
