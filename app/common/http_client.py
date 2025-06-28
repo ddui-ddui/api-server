@@ -71,7 +71,6 @@ async def make_request(
     data: Optional[Dict[str, Any]] = None,
     headers: Optional[Dict[str, Any]] = None,
     json_data: Optional[Dict[str, Any]] = None,
-    response_format: str = "json"
 ) -> httpx.Response:
     """
     HTTP 요청을 보내는 공통 함수
@@ -83,7 +82,6 @@ async def make_request(
         data: 요청 body (form data)
         headers: HTTP 헤더
         json_data: JSON 데이터 (application/json)
-        response_format: 응답 형식 (json, xml)
     Returns:
         httpx.Response: HTTP 응답 객체
     """
@@ -100,8 +98,50 @@ async def make_request(
         #     response = await client.delete(url, params=params, headers=headers)
         else:
             raise ValueError(f"Unsupported HTTP method: {method}")
-        logger.info(f"Low Json Data: {response.text}")
-        if response_format.lower() == "json":
+        
+        response_text = response.text.strip()
+        is_xml_response = response_text.startswith('<?xml') or response_text.startswith('<')
+
+
+        # XML 에러 응답 예시
+        # 공공데이터 포털 진짜 이상함...
+        # <OpenAPI_ServiceResponse>
+        #     <cmmMsgHeader>
+        #         <errMsg>SERVICE ERROR</errMsg>
+        #         <returnAuthMsg>SERVICE_ACCESS_DENIED_ERROR</returnAuthMsg>
+        #         <returnReasonCode>20</returnReasonCode>
+        #     </cmmMsgHeader>
+        # </OpenAPI_ServiceResponse>
+
+        if is_xml_response:
+            try:
+                root = ET.fromstring(response.text)
+                
+                err_msg = root.find('.//errMsg')
+                return_reason_code = root.find('.//returnReasonCode')
+                return_auth_msg = root.find('.//returnAuthMsg')
+                
+                if err_msg is not None and return_reason_code is not None:
+                    error_code = return_reason_code.text
+                    error_msg = return_auth_msg.text if return_auth_msg is not None else err_msg.text
+                    logger.error(f"API Error Response - Code: {error_code}, Message: {error_msg}")
+                    handle_response_error(error_code, error_msg)
+                else: 
+                    # 정상 XML 응답 처리
+                    result_code = root.find('.//resultCode')
+                    result_msg = root.find('.//resultMsg')
+                    
+                    response_code = result_code.text if result_code is not None else "Unknown"
+                    response_msg = result_msg.text if result_msg is not None else "Unknown error"
+                    logger.info(f"Response Code: {response_code}, Message: {response_msg}")
+                    if response_code != "00":
+                        handle_response_error(response_code, response_msg)
+                        
+            except ET.ParseError:
+                logger.error("XML 응답 파싱 오류")
+                raise HTTPException(status_code=500, detail="XML 응답 형식 오류")
+        else: 
+            # JSON 응답 처리
             try:
                 data = response.json()
                 response_code = data.get("response", {}).get("header", {}).get("resultCode")
@@ -113,22 +153,5 @@ async def make_request(
             except json.JSONDecodeError:
                 logger.error("JSON 응답 파싱 오류")
                 raise HTTPException(status_code=500, detail="API 응답 형식 오류")
-                
-        elif response_format.lower() == "xml":
-            try:
-                root = ET.fromstring(response.text)
-               
-                result_code = root.find('.//resultCode')
-                result_msg = root.find('.//resultMsg')
-
-                response_code = result_code.text if result_code is not None else "Unknown"
-                response_msg = result_msg.text if result_msg is not None else "Unknown error"
-                logger.info(f"Response Code: {response_code}, Message: {response_msg}")
-                if response_code != "00":
-                    handle_response_error(response_code, response_msg)
-                    
-            except ET.ParseError:
-                logger.error("XML 응답 파싱 오류")
-                raise HTTPException(status_code=500, detail="XML 응답 형식 오류")
 
         return response

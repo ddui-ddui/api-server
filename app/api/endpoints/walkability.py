@@ -42,7 +42,7 @@ async def get_walkability_current (
 
 @router.get("/hourly")
 async def get_walkability_hourly (
-    lat: float = Query(37.6419378, description="위도"),
+lat: float = Query(37.6419378, description="위도"),
     lon: float = Query(127.0170019, description="경도"),
     hours: int = Query(12, description="시간 (0-12)", ge=1, le=12),
     dog_size: DogSize = Query(DogSize.small, description="견종 크기 (small/medium/large)"),

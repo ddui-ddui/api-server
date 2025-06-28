@@ -38,7 +38,7 @@ async def get_sunrise_sunset(lat: float, lon: float, retry_days:int = 0) -> dict
     url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_ASTRONOMY_SUN_URL}"
 
     try:
-        response = await make_request(url=url, params=params, response_format="xml")
+        response = await make_request(url=url, params=params)
         root = ET.fromstring(response.text)
         
         # xml에서 일출 및 일몰 시간 추출

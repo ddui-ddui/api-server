@@ -84,7 +84,7 @@ class WalkabilityCalculator:
         walkability_sentences_data = WALKABILITY_SENTENCES_GRADES.get("sentences", {})
         ootd = None
         phrases = None
-
+              
         for ootd in ootd_data:
             # 비오면 무조건 우비(타입 배열)
             if weather_data["precipitation_type"] in RAIN_PRECIPITATION_TYPES:
@@ -95,11 +95,10 @@ class WalkabilityCalculator:
             if ootd["min"] <= weather_data["temperature"] <= ootd["max"]:
                 ootd = ootd["clothing"]
                 break
-
         for items in walkability_sentences_data:
             if int(items["grade"]) == walkability_grade:
                 phrases = items["clothing"]
-                break
+                # break
 
         logger.info(f"OOTD Info: {ootd}, Phrases: {phrases}")
 
