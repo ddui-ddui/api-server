@@ -67,7 +67,7 @@ def setup_logging():
     # 운영 환경에서만 파일 핸들러 추가
     if settings.ENVIRONMENT == "production":
         logger.add(
-            "logs/app_{time:YYYY-MM-DD_HH-mm-ss}.log",
+            "logs/app_{time:YYYY-MM-DD HH:mm:ss}.log",
             format=log_format,
             level=log_level,
             rotation="100 MB",  # 자정마다 새 파일 생성
