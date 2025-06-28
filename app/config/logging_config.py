@@ -1,100 +1,81 @@
-import logging
-import logging.handlers
-import os
 import re
+import sys
+from loguru import logger
 from app.core.config import settings
 from app.config.context import request_id, client_ip
-from app.common.logging_file_handler import create_daily_rotating_handler
 
-_logging_initialized = False
+# 민감한 정보 마스킹 함수
+def mask_sensitive_data(message: str) -> str:
+    """메시지에서 민감한 정보를 마스킹 처리"""
+    sensitive_patterns = [
+        (r'(serviceKey["\']?\s*[:=]\s*["\']?)([^"\'&\s]{8,})(["\']?)', r'\1\2[:4]***\2[-4:]\3')
+    ]
+    
+    for pattern, _ in sensitive_patterns:
+        matches = re.finditer(pattern, message, re.IGNORECASE)
+        for match in matches:
+            original_value = match.group(2)
+            if len(original_value) > 8:
+                masked_value = f"{original_value[:4]}***{original_value[-4:]}"
+            else:
+                masked_value = "***"
+            
+            message = message.replace(
+                match.group(0), 
+                match.group(1) + masked_value + (match.group(3) if len(match.groups()) >= 3 else '')
+            )
+    
+    return message
 
-class ContextFormatter(logging.Formatter):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.sensitive_patterns = [
-            (r'(serviceKey["\']?\s*[:=]\s*["\']?)([^"\'&\s]{8,})(["\']?)', r'\1\2[:4]***\2[-4:]\3')
-        ]
-
-    def mask_sensitive_data(self, message):
-        """메시지에서 민감한 정보를 마스킹 처리"""
-        for pattern, replacement in self.sensitive_patterns:
-            # serviceKey 값 찾기
-            matches = re.finditer(pattern, message, re.IGNORECASE)
-            for match in matches:
-                original_value = match.group(2)
-                if len(original_value) > 8:
-                    masked_value = f"{original_value[:4]}***{original_value[-4:]}"
-                else:
-                    masked_value = "***"
-                
-                message = message.replace(
-                    match.group(0), 
-                    match.group(1) + masked_value + (match.group(3) if len(match.groups()) >= 3 else '')
-                )
-        
-        return message
-
-    def format(self, record):
-        record.request_id = request_id.get() or "System"
-        record.client_ip = client_ip.get() or "System"
-        
-        if hasattr(record, 'msg') and record.msg:
-            record.msg = self.mask_sensitive_data(str(record.msg))
-        
-        if record.args:
-            masked_args = []
-            for arg in record.args:
-                if isinstance(arg, str):
-                    masked_args.append(self.mask_sensitive_data(arg))
-                else:
-                    masked_args.append(arg)
-            record.args = tuple(masked_args)
-        
-        return super().format(record)
-
-def get_logger(name="DDUI-DDUI"):
-    return logging.getLogger(name)
+# 커스텀 포맷터
+def format_record(record):
+    """로그 레코드에 컨텍스트 정보 추가"""
+    record["extra"]["request_id"] = request_id.get() or "System"
+    record["extra"]["client_ip"] = client_ip.get() or "System"
+    
+    # 민감한 정보 마스킹
+    if "message" in record:
+        record["message"] = mask_sensitive_data(str(record["message"]))
+    
+    return record
 
 def setup_logging():
-
-    global _logging_initialized
+    # 기본 핸들러 제거
+    logger.remove()
     
-    # 이미 초기화되었으면 기존 로거 반환
-    if _logging_initialized:
-        return logging.getLogger("DDUI-DDUI")
+    # 로그 레벨 설정
+    log_level = settings.LOG_LEVEL.upper()
     
-    logger = logging.getLogger("DDUI-DDUI")
-
-    
-    log_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
-    logger.setLevel(log_level)
-    
-    formatter = ContextFormatter(
-        '%(asctime)s - [%(request_id)s] - %(client_ip)s - %(levelname)s - %(message)s'
+    # 로그 포맷 정의
+    log_format = (
+        "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
+        "<level>{level: <3}</level> | "
+        "<cyan>[{extra[request_id]}]</cyan> | "
+        "<blue>{extra[client_ip]}</blue> | "
+        "<level>{message}</level>"
     )
-
-    # 운영에서만 로그 파일 쌓음
+    
+    # 콘솔 핸들러 추가
+    logger.add(
+        sys.stdout,
+        format=log_format,
+        level=log_level,
+        colorize=True,
+        filter=format_record
+    )
+    
+    # 운영 환경에서만 파일 핸들러 추가
     if settings.ENVIRONMENT == "production":
-        # 로그 파일 쌓을 위치
-        log_dir = "logs"
-        if not os.path.exists(log_dir):
-            os.makedirs(log_dir)
-        
-        file_handler = create_daily_rotating_handler(
-            log_dir="logs",
-            filename="app.log",
-            max_size_mb=20,
-            backup_count=50
+        logger.add(
+            "logs/app_{time:YYYY-MM-DD}_{index}.log",
+            format=log_format,
+            level=log_level,
+            rotation="100 MB",  # 자정마다 새 파일 생성
+            retention="30 days",
+            filter=format_record
         )
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
-    
-    
-    # 핸들러 추가
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
 
-    _logging_initialized = True
-    
+def get_logger():
     return logger
+
+setup_logging()
