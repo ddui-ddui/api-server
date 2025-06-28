@@ -2,22 +2,21 @@ from fastapi import FastAPI, Request
 from app.core.config import settings
 from app.api.api import api_router
 from fastapi.middleware.cors import CORSMiddleware
-from app.config.logging_config import setup_logging, get_logger
+from app.config.logging_config import get_logger
 from app.config.context import request_id, client_ip, user_agent
-import logging
+# import logging
 import time
 import uuid
 
-setup_logging()
 logger = get_logger()
 
-log_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
-if settings.ENVIRONMENT == "production":
-    logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
-    logging.getLogger("uvicorn").setLevel(logging.INFO)
-else:
-    logging.getLogger("uvicorn.access").setLevel(log_level)
-    logging.getLogger("uvicorn").setLevel(log_level)
+# log_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
+# if settings.ENVIRONMENT == "production":
+#     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+#     logging.getLogger("uvicorn").setLevel(logging.INFO)
+# else:
+#     logging.getLogger("uvicorn.access").setLevel(log_level)
+#     logging.getLogger("uvicorn").setLevel(log_level)
 
 
 app = FastAPI(
@@ -61,12 +60,6 @@ else:
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-    global logger
-
-    if logger is None:
-        logger = setup_logging()
-        logger.warning("로거가 미들웨어에서 늦게 초기화됨")
-    
     start_time = time.time()
     req_id_value = str(uuid.uuid4())[:8]
     
@@ -103,6 +96,4 @@ async def log_requests(request: Request, call_next):
         logger.error(f"Request failed: {request.method} {request.url.path} - {str(e)} - {process_time:.4f}s")
         raise
     
-    return response
-
 app.include_router(api_router, prefix=settings.API_V1_URL)
