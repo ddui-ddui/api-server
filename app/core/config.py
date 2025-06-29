@@ -20,7 +20,8 @@ class Settings(BaseSettings):
     SSL_VERIFY: bool = True
 
     # GOV API INFO
-    GOV_DATA_API_KEY: str = ""
+    GOV_DATA_API_KEY_1: str = ""
+    GOV_DATA_API_KEY_2: str = ""
     GOV_DATA_BASE_URL: str = "https://apis.data.go.kr"
     
     # Weather API URL

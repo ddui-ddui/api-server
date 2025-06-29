@@ -29,7 +29,6 @@ async def get_sunrise_sunset(lat: float, lon: float, retry_days:int = 0) -> dict
 
     # Request URL
     params = {
-        "serviceKey": unquote(settings.GOV_DATA_API_KEY),
         "locdate"	: date_str,
         "longitude": f"{lon:.6f}",	
         "latitude"	: f"{lat:.6f}",

@@ -51,7 +51,6 @@ async def find_nearby_air_quality_station(lat: float, lon: float) -> Optional[Li
     url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_AIRQUALITY_NEARSATIONS_URL}"
     
     params = {
-        "serviceKey": unquote(settings.GOV_DATA_API_KEY),
         "returnType": "json",
         "tmX": tmx,
         "tmY": tmy,
@@ -94,7 +93,6 @@ async def get_air_quality_data(stations: List[str], air_quality_type: str = 'kor
     # 모든 측정소에 대해 순차적으로 시도
     for station_name in stations:
         params = {
-            "serviceKey": unquote(settings.GOV_DATA_API_KEY),
             "returnType": "json",
             "numOfRows": 1000,
             "pageNo": 1,
@@ -238,7 +236,6 @@ async def get_hourly_air_quality(lat: float, lon: float, hours: int = 12) -> Dic
             param_date = now.strftime("%Y-%m-%d")
     
     params = {
-        "serviceKey": unquote(settings.GOV_DATA_API_KEY),
         "returnType": "json",
         "pageNo": 1,
         "numOfRows": 1000,
@@ -357,7 +354,6 @@ async def get_weekly_air_quality(lat: float, lon: float, air_quality_type: str, 
         
     for i in range(range_days):
         params = {
-            "serviceKey": unquote(settings.GOV_DATA_API_KEY),
             "returnType": "json",
             "pageNo": 1,
             "numOfRows": 100,

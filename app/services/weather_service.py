@@ -29,7 +29,6 @@ async def get_previous_weather(lat: float, lon: float, current_date: str, curren
     for station in stations:
         try:
             params = {
-                "serviceKey": unquote(settings.GOV_DATA_API_KEY),
                 "numOfRows": 24,
                 "dataType": "JSON",
                 "dataCd": "ASOS",
@@ -130,7 +129,6 @@ async def get_ultra_short_forecast(lat: float, lon: float, fields: List[str] = N
 
     # Request URL
     params = {
-        "serviceKey": unquote(settings.GOV_DATA_API_KEY),
         "numOfRows": 1000,
         "pageNo": 1,
         "dataType": "JSON",
@@ -266,7 +264,6 @@ async def get_hourly_forecast(lat: float, lon: float, hours: int = 12) -> Dict[s
     url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_WEATHER_SHORT_URL}"
     
     params = {
-        "serviceKey": unquote(settings.GOV_DATA_API_KEY),
         "numOfRows": 1000,
         "pageNo": 1,
         "dataType": "JSON",
@@ -307,7 +304,6 @@ async def get_hourly_forecast(lat: float, lon: float, hours: int = 12) -> Dict[s
             elif category == "SKY":  # 하늘상태 (1:맑음, 3:구름많음, 4:흐림)
                 forecasts_by_time[key]["sky_condition"] = int(value)
             elif category == "POP":  # 강수확률
-                print(f"POP: {value}")
                 forecasts_by_time[key]["precipitation_probability"] = int(value)
             # elif category == "PCP": # 강수량
             #     amount = float(value)
@@ -394,7 +390,6 @@ async def get_daily_temperature_range(nx: float, ny: float) -> Dict[str, Any]:
     url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_WEATHER_SHORT_URL}"
 
     params = {
-        "serviceKey": unquote(settings.GOV_DATA_API_KEY),
         "numOfRows": 1000,
         "pageNo": 1,
         "dataType": "JSON",
@@ -610,7 +605,6 @@ async def get_short_range_forecast(nx: int, ny: int) -> List[Dict[str, Any]]:
     # API 요청
     url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_WEATHER_SHORT_URL}"
     params = {
-        "serviceKey": unquote(settings.GOV_DATA_API_KEY),
         "numOfRows": 1000,
         "pageNo": 1,
         "dataType": "JSON",
@@ -689,7 +683,6 @@ async def get_mid_range_forecast(nx: int, ny: int) -> List[Dict[str, Any]]:
     weather_url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_WEATHER_MID_LAND_URL}" # 육상예보
     
     common_params = {
-        "serviceKey": unquote(settings.GOV_DATA_API_KEY),
         "numOfRows": 10,
         "pageNo": 1,
         "dataType": "JSON",
@@ -766,7 +759,6 @@ async def get_weather_uvindex(lat: float, lon: float) -> int:
     region_code = region_data.get("region_code")
     
     params = {
-        "serviceKey": unquote(settings.GOV_DATA_API_KEY),
         "pageNo": 1,
         "numOfRows": 10,
         "dataType": "JSON",

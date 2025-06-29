@@ -5,6 +5,7 @@ import certifi
 from app.core.config import settings
 from typing import Dict, Any, Optional
 import xml.etree.ElementTree as ET
+from app.utils.service_key_rotator import service_key_rotator
 from app.config.logging_config import get_logger
 logger = get_logger()
 
@@ -28,6 +29,13 @@ async def get_http_client() -> httpx.AsyncClient:
 
 def handle_response_error(response_code: str, response_msg: str) -> None:
     logger.error(f"API 오류 (Code: {response_code}): {response_msg}")
+
+    service_key_error_codes = ["20", "21", "22", "30", "31", "32", "33"]
+    
+    # if response_code in service_key_error_codes:
+    #     logger.warning(f"서비스 키 관련 에러 발생 (Code: {response_code}), 강제 로테이션 수행")
+    #     service_key_rotator.force_rotate()
+
     if response_code == "01":  # APPLICATION_ERROR
         raise HTTPException(status_code=500, detail=f"어플리케이션 에러: {response_msg}")
     elif response_code == "02":  # DB_ERROR
@@ -85,8 +93,13 @@ async def make_request(
     Returns:
         httpx.Response: HTTP 응답 객체
     """
+    # 서비스키 스케쥴링
+    params['serviceKey'] = service_key_rotator.get_next_service_key()
+    print(service_key_rotator.get_current_stats())
+
     logger.info(f"Request Url: {url}")
     logger.info(f"param: {params}")
+
     async with await get_http_client() as client:
         if method.upper() == "GET":
             response = await client.get(url, params=params, headers=headers)
