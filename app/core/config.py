@@ -1,6 +1,17 @@
 from pydantic_settings import BaseSettings
+from pydantic import ConfigDict, Field
+import os
 
 class Settings(BaseSettings):
+    model_config = ConfigDict(
+        env_file=".env",
+        env_file_encoding='utf-8',
+        case_sensitive=False
+    )
+    
+    # Environment
+    ENVIRONMENT: str = Field(default="development", env="ENVIRONMENT")
+    
     # API
     API_V1_URL: str = "/api/v1"
     PROJECT_NAME: str = "DDUI DDUI API Server"
@@ -11,7 +22,6 @@ class Settings(BaseSettings):
     WORKERS: int = 1
     TIMEOUT: int = 30
     RELOAD: bool = False
-    ENVIRONMENT: str = "development"
     
     # Logging
     LOG_LEVEL: str = "info"
@@ -41,10 +51,11 @@ class Settings(BaseSettings):
     GOV_DATA_AIRQUALITY_STATION_URL: str = ""
     GOV_DATA_AIRQUALITY_HOURLY_URL: str = ""
     GOV_DATA_AIRQUALITY_WEEKLY_URL: str = ""
-    
-    class Config:
-        env_file = ".env"
-        env_file_encoding = 'utf-8'
-        case_sensitive = False
+
+    # Redis
+    REDIS_HOST: str = Field(default="localhost", env="REDIS_HOST")
+    REDIS_PORT: int = Field(default=6379, env="REDIS_PORT")
+    REDIS_PASSWORD: str = Field(default="", env="REDIS_PASSWORD")
+    REDIS_DB: int = Field(default=0, env="REDIS_DB")
 
 settings = Settings()

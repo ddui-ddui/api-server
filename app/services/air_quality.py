@@ -1,3 +1,4 @@
+import asyncio
 from datetime import date, datetime, timedelta
 from typing import List, Optional, Dict, Any
 
@@ -8,6 +9,9 @@ from urllib.parse import unquote
 from app.common.http_client import make_request
 from app.utils.airquality_calculator import calculate_individual_air_quality_score
 from app.utils.convert_for_region import convert_lat_lon_for_region
+from app.services.cache_service import AirQualityCacheService
+from app.models.air_quality import HourlyAirQualityCache, WeeklyAirQualityCache
+from app.utils.airquality_calculator import convert_grade_to_value_for_hour, convert_grade_to_value_for_week
 from app.config.logging_config import get_logger
 logger = get_logger()
 
@@ -195,6 +199,122 @@ async def get_air_quality_data(stations: List[str], air_quality_type: str = 'kor
     
 
 async def get_hourly_air_quality(lat: float, lon: float, hours: int = 12) -> Dict[str, Any]:
+    cached_data = await AirQualityCacheService().get_hourly_cache()
+    print(f"캐시된 시간별 대기질 데이터: {cached_data}")
+    if cached_data:
+        logger.info("캐시된 시간별 대기질 데이터를 반환합니다.")
+        return process_air_quality_data(cached_data.forecasts, lat, lon, hours)
+    else:
+        logger.info("캐시된 시간별 대기질 데이터가 없습니다. API에서 조회합니다.")
+        
+        now = datetime.now()
+        param_date = now.strftime("%Y-%m-%d")
+        raw_data = await fetch_hourly_air_quality_raw(param_date)
+        
+        cache_data = HourlyAirQualityCache(
+            forecasts=raw_data,
+            cached_at=datetime.now()
+        )
+        await AirQualityCacheService().set_hourly_cache(cache_data)
+        
+        return process_air_quality_data(raw_data, lat, lon, hours)
+    
+def process_air_quality_data(raw_data: Dict[str, Any], lat: float, lon: float, hours: int) -> Dict[str, Any]:
+    """시간별 대기질 데이터 가공 (캐시/API 공통 사용)"""
+    now = datetime.now()
+    current_hour = now.hour
+    current_minute = now.minute
+    region_data = convert_lat_lon_for_region(lat, lon)
+    region = region_data.get("subregion")
+
+    forecast_time = [5, 11, 17, 23]
+    closest_time = None
+    param_date = None
+
+    if current_hour < 5 or (current_hour == 5 and current_minute < 30):
+        closest_time = 23
+        param_date = (now - timedelta(days=1)).strftime("%Y-%m-%d")
+    else:
+        # 현재 시간 기준으로 가장 최근 발표 시간 찾기
+        for time in reversed(forecast_time):
+            if time == current_hour and current_minute < 30:
+                continue
+            if time <= current_hour:
+                closest_time = time
+                break
+        
+        if closest_time is None:
+            closest_time = 23
+            param_date = (now - timedelta(days=1)).strftime("%Y-%m-%d")
+        else:
+            param_date = now.strftime("%Y-%m-%d")
+
+    items = raw_data.get("response", {}).get("body", {}).get("items", [])
+    if not items:
+        logger.info("대기질 예보 데이터가 없습니다.")
+        return {'forecasts': []}
+        
+    closest_time_str = f"{closest_time}시 발표"
+    
+    today_pm10 = None
+    tomorrow_pm10 = None
+    today_pm25 = None
+    tomorrow_pm25 = None
+    
+    for item in items:
+        if closest_time_str in item.get("dataTime", ""):
+            if item.get("informCode") == "PM10":
+                if item.get("informData") == param_date:
+                    today_pm10 = item
+                elif item.get("informData") == (now + timedelta(days=1)).strftime("%Y-%m-%d"):
+                    tomorrow_pm10 = item
+            elif item.get("informCode") == "PM25":
+                if item.get("informData") == param_date:
+                    today_pm25 = item
+                elif item.get("informData") == (now + timedelta(days=1)).strftime("%Y-%m-%d"):
+                    tomorrow_pm25 = item
+    
+    if not today_pm10 or not today_pm25:
+        raise HTTPException(status_code=404, detail="오늘 대기질 예보 데이터를 찾을 수 없습니다.")
+    
+    forecasts = []
+    start_hour = current_hour + 1
+    
+    for i in range(hours):
+        forecast_hour = (start_hour + i) % 24
+        forecast_date = now.date()
+        
+        if forecast_hour < start_hour and i > 0:
+            forecast_date = now.date() + timedelta(days=1)
+        
+        if forecast_date == now.date():
+            pm10_grade_str = parse_region_data(today_pm10.get("informGrade"), region)
+            pm25_grade_str = parse_region_data(today_pm25.get("informGrade"), region)
+        else:
+            # 내일 데이터가 없으면 오늘 데이터로 대체
+            if not tomorrow_pm10 or not tomorrow_pm25:
+                pm10_grade_str = parse_region_data(today_pm10.get("informGrade"), region)
+                pm25_grade_str = parse_region_data(today_pm25.get("informGrade"), region)
+            else:
+                pm10_grade_str = parse_region_data(tomorrow_pm10.get("informGrade"), region)
+                pm25_grade_str = parse_region_data(tomorrow_pm25.get("informGrade"), region) 
+    
+        pm10_grade = convert_grade_to_value_for_hour(pm10_grade_str)
+        pm25_grade = convert_grade_to_value_for_hour(pm25_grade_str)
+            
+        forecast_date_str = forecast_date.strftime("%Y%m%d")
+        forecast_hour = f"{forecast_hour:02d}00"
+        
+        forecasts.append({
+            "base_date": forecast_date_str,
+            "base_time": forecast_hour,
+            "pm10_grade": pm10_grade,
+            "pm25_grade": pm25_grade
+        })
+        
+    return {"forecasts": forecasts}
+    
+async def get_hourly_air_quality_from_api(lat: float, lon: float, hours: int = 12) -> Dict[str, Any]:
     """
     대기질 정보는 하루에 4번 제공함 
     그래서 데이터가 시간별이라기 보단 오전 오후 데이터라고 보면 편함
@@ -205,13 +325,10 @@ async def get_hourly_air_quality(lat: float, lon: float, hours: int = 12) -> Dic
     :param hour: 시간 (0-23)
     :return: 현재 날씨 정보
     """
+
     now = datetime.now()
     current_hour = now.hour
     current_minute = now.minute
-    region_data = convert_lat_lon_for_region(lat, lon)
-    region = region_data.get("subregion")
-
-    url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_AIRQUALITY_HOURLY_URL}"
 
     forecast_time = [5, 11, 17, 23]
     closest_time = None
@@ -235,89 +352,56 @@ async def get_hourly_air_quality(lat: float, lon: float, hours: int = 12) -> Dic
         else:
             param_date = now.strftime("%Y-%m-%d")
     
+    raw_data = await fetch_hourly_air_quality_raw(param_date)
+    return process_air_quality_data(raw_data, lat, lon, hours)
+
+async def fetch_hourly_air_quality_raw(search_date: str) -> Dict[str, Any]:
+    """
+    시간별 대기질 원본 데이터 조회 (날짜만 필요)
+    :param search_date: 조회 날짜 (YYYY-MM-DD)
+    :return: API 원본 응답 데이터
+    """
+    url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_AIRQUALITY_HOURLY_URL}"    
     params = {
         "returnType": "json",
         "pageNo": 1,
         "numOfRows": 1000,
-        "searchDate": param_date,
+        "searchDate": search_date,
         "InformCode": "PM10",
     }
-    
     try:
         response = await make_request(url=url, params=params)
         data = response.json()
-        items = data.get("response", {}).get("body", {}).get("items", [])
-        if not items:
-            logger.info("대기질 예보 데이터가 없습니다.")
-            return {'forecasts': []}
-            
-        closest_time_str = f"{closest_time}시 발표"
-        
-        today_pm10 = None
-        tomorrow_pm10 = None
-        today_pm25 = None
-        tomorrow_pm25 = None
-        
-        for item in items:
-            if closest_time_str in item.get("dataTime", ""):
-                if item.get("informCode") == "PM10":
-                    if item.get("informData") == param_date:
-                        today_pm10 = item
-                    elif item.get("informData") == (now + timedelta(days=1)).strftime("%Y-%m-%d"):
-                        tomorrow_pm10 = item
-                elif item.get("informCode") == "PM25":
-                    if item.get("informData") == param_date:
-                        today_pm25 = item
-                    elif item.get("informData") == (now + timedelta(days=1)).strftime("%Y-%m-%d"):
-                        tomorrow_pm25 = item
-        if not today_pm10 or not today_pm25:
-            raise HTTPException(status_code=404, detail="오늘 대기질 예보 데이터를 찾을 수 없습니다.")
-        
-        forecasts = []
-        start_hour = current_hour + 1
-        
-        for i in range(hours):
-            forecast_hour = (start_hour + i) % 24
-            forecast_date = now.date()
-            
-            if forecast_hour < start_hour and i > 0:
-                forecast_date = now.date() + timedelta(days=1)
-            
-            if forecast_date == now.date():
-                pm10_grade_str = parse_region_data(today_pm10.get("informGrade"), region)
-                pm25_grade_str = parse_region_data(today_pm25.get("informGrade"), region)
-            else:
-                # 내일 데이터가 없으면 오늘 데이터로 대체
-                if not tomorrow_pm10 or not tomorrow_pm25:
-                    pm10_grade_str = parse_region_data(today_pm10.get("informGrade"), region)
-                    pm25_grade_str = parse_region_data(today_pm25.get("informGrade"), region)
-                else:
-                    pm10_grade_str = parse_region_data(tomorrow_pm10.get("informGrade"), region)
-                    pm25_grade_str = parse_region_data(tomorrow_pm25.get("informGrade"), region) 
-        
-            pm10_grade = convert_grade_to_value_for_hour(pm10_grade_str)
-            pm25_grade = convert_grade_to_value_for_hour(pm25_grade_str)
-                
-            forecast_date_str = forecast_date.strftime("%Y%m%d")
-            forecast_hour = f"{forecast_hour:02d}00"
-            
-            forecasts.append({
-                "base_date": forecast_date_str,
-                "base_time": forecast_hour,
-                "pm10_grade": pm10_grade,
-                "pm25_grade": pm25_grade
-            })
-            
-        result = {
-            "forecasts": forecasts
-        }
-        
-        return result
-        
+        return data
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"대기질 데이터 처리 오류: {str(e)}")
+        logger.error(f"시간별 대기질 원본 데이터 조회 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail="시간별 대기질 원본 데이터 조회 오류")
     
 async def get_weekly_air_quality(lat: float, lon: float, air_quality_type: str, days: int = 7) -> Dict[str, Any]:
+    if days > 7:
+        raise HTTPException(status_code=400, detail="최대 7일까지만 조회 가능합니다.")
+    
+    cached_data = await AirQualityCacheService().get_weekly_cache()
+    if cached_data:
+        logger.info("캐시된 주간 대기질 데이터에서 지역별 데이터를 추출합니다.")
+        # 캐시된 가공 데이터에서 사용자 지역만 추출
+        return extract_region_data_from_cache(cached_data.forecasts, lat, lon, air_quality_type, days)
+    else:
+        logger.info("캐시된 주간 대기질 데이터가 없습니다. API에서 조회합니다.")
+        
+        # API에서 가공된 데이터 생성
+        processed_forecasts = await process_weekly_air_quality_for_cache()
+        
+        # 가공된 데이터를 캐시에 저장
+        cache_data = WeeklyAirQualityCache(
+            forecasts=processed_forecasts,  # 가공된 전국 데이터 저장
+            cached_at=datetime.now()
+        )
+        await AirQualityCacheService().set_weekly_cache(cache_data)
+        
+        return extract_region_data_from_cache(processed_forecasts, lat, lon, air_quality_type, days)
+    
+async def get_weekly_air_quality_from_api(lat: float, lon: float, air_quality_type: str, days: int = 7) -> Dict[str, Any]:
     """
     주간예보는 당일 조회하면 3일 뒤의 예보부터 3일치가 제공됨
     19일에 조회하면 22일 ~ 24일 예보가 제공됨
@@ -335,9 +419,7 @@ async def get_weekly_air_quality(lat: float, lon: float, air_quality_type: str, 
     :param days: 날짜 (1~7)
     :return: 현재 날씨 정보
     """
-    if days > 7:
-        raise HTTPException(status_code=400, detail="최대 7일까지만 조회 가능합니다.")
-    
+        
     now = datetime.now()
     today = now.date()
     start_date = today - timedelta(days=3)
@@ -353,18 +435,7 @@ async def get_weekly_air_quality(lat: float, lon: float, air_quality_type: str, 
         dates[date_str] = None
         
     for i in range(range_days):
-        params = {
-            "returnType": "json",
-            "pageNo": 1,
-            "numOfRows": 100,
-            "searchDate": start_date.strftime("%Y-%m-%d"),
-        }
-        start_date += timedelta(days=1)
-    
-        url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_AIRQUALITY_WEEKLY_URL}"
-        
-        response = await make_request(url=url, params=params)
-        data = response.json()
+        data = await fetch_weekly_air_quality_raw(search_date=start_date.strftime("%Y-%m-%d"))
         items = data.get("response", {}).get("body", {}).get("items", [])
         
         if not items:
@@ -391,6 +462,10 @@ async def get_weekly_air_quality(lat: float, lon: float, air_quality_type: str, 
                 value = parse_region_data(forecast_value, region)
                 grade = convert_grade_to_value_for_week(value, air_quality_type)
                 dates[forecast_date_formatted] = grade
+
+        # 캐시가 없을 때 tps 줄이는 용도
+        if i > 0:
+            await asyncio.sleep(0.5)
     
     # 결과처리 및 5일 이후의 데이터는 마지막 데이터로 맵핑
     forecasts = []
@@ -410,7 +485,121 @@ async def get_weekly_air_quality(lat: float, lon: float, air_quality_type: str, 
         
     
     return {'forecasts': forecasts}
+
+def extract_region_data_from_cache(cached_forecasts: List[Dict], lat: float, lon: float, air_quality_type: str, days: int) -> Dict[str, Any]:
+    """캐시된 전국 데이터에서 사용자 지역 데이터만 추출"""
+    region = convert_lat_lon_for_region(lat, lon).get("subregion", "")
     
+    results = []
+    
+    for i in range(min(days, len(cached_forecasts))):
+        forecast = cached_forecasts[i]
+        all_regions_data = forecast.get("all_regions_data", "")
+        
+        # 사용자 지역 데이터만 추출
+        region_value = parse_region_data(all_regions_data, region)
+        grade = convert_grade_to_value_for_week(region_value, air_quality_type)
+        
+        results.append({
+            "base_date": forecast.get("base_date"),
+            "air_quality_score": grade
+        })
+    
+    return {"forecasts": results}
+
+async def process_weekly_air_quality_for_cache() -> List[Dict[str, Any]]:
+    """
+    주간별 대기질 데이터 가공 (캐시 저장용 - 전국 지역 파싱, 7일치 완성)
+    """
+    now = datetime.now()
+    today = now.date()
+    start_date = today - timedelta(days=3)
+    range_days = 3
+    
+    # 7일치 날짜 배열 생성
+    dates = {}
+    for i in range(1, 8):  # 1~7일
+        target_date = today + timedelta(days=i)
+        date_str = target_date.strftime("%Y%m%d")
+        dates[date_str] = None
+        
+    # 3번 API 호출해서 최신 데이터로 덮어쓰기
+    for i in range(range_days):
+        search_date = (start_date + timedelta(days=i)).strftime("%Y-%m-%d")
+        data = await fetch_weekly_air_quality_raw(search_date)
+        items = data.get("response", {}).get("body", {}).get("items", [])
+        
+        if not items:
+            continue
+        
+        item = items[0]
+        date_fields = [
+            ("frcstOneDt", "frcstOneCn"),
+            ("frcstTwoDt", "frcstTwoCn"), 
+            ("frcstThreeDt", "frcstThreeCn"),
+            ("frcstFourDt", "frcstFourCn")
+        ]
+        
+        for date_field, forecast_field in date_fields:
+            forecast_date = item.get(date_field, "")
+            forecast_value = item.get(forecast_field, "")
+            
+            if not forecast_date or not forecast_value:
+                continue
+            
+            # 날짜 형식 변환
+            forecast_date_formatted = forecast_date.replace("-", "")
+            if forecast_date_formatted in dates:
+                dates[forecast_date_formatted] = {
+                    "base_date": forecast_date_formatted,
+                    "all_regions_data": forecast_value
+                }
+
+        # TPS 조절
+        if i > 0:
+            await asyncio.sleep(0.5)
+    
+    forecasts = []
+    last_forecast = None
+    
+    for date_str in sorted(dates.keys()):
+        if dates[date_str]:
+            forecast = dates[date_str]
+            last_forecast = forecast
+        else:
+            if last_forecast:
+                forecast = {
+                    "base_date": date_str,
+                    "all_regions_data": last_forecast["all_regions_data"]
+                }
+            else:
+                forecast = {
+                    "base_date": date_str,
+                    "all_regions_data": "정보없음"
+                }
+        
+        forecasts.append(forecast)
+    
+    return forecasts
+
+async def fetch_weekly_air_quality_raw(search_date: str) -> Dict[str, Any]:
+    """
+    주간별 대기질 원본 데이터 조회 (날짜만 필요)
+    :param search_date: 조회 날짜 (YYYY-MM-DD)
+    :return: API 원본 응답 데이터
+    """
+    url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_AIRQUALITY_WEEKLY_URL}"
+    
+    params = {
+        "returnType": "json",
+        "pageNo": 1,
+        "numOfRows": 100,
+        "searchDate": search_date,
+    }
+    
+    response = await make_request(url=url, params=params)
+    data = response.json()
+    return data
     
 def parse_region_data(data_str, target_region):
     if not data_str:
@@ -424,34 +613,5 @@ def parse_region_data(data_str, target_region):
             if len(parts) >= 2:
                 return parts[1].strip()
     return "정보없음"
-
-def convert_grade_to_value_for_hour(grade):
-    if grade == "좋음":
-        return 1
-    elif grade == "보통":
-        return 2
-    elif grade == "나쁨":
-        return 3
-    elif grade == "매우나쁨":
-        return 4
-    return 2
-
-def convert_grade_to_value_for_week(grade: str, air_quality_type: str) -> int:
-    """
-    기상청 문서 기준
-    초미세먼지 일평균 농도 "낮음"은 PM2.5 농도 0∼35 ㎍/㎥이며, "높음"은 PM2.5 농도 36 ㎍/㎥ 이상입니다.
-    :param grade: 등급
-    :return: 등급 점수
-    """    
-    if air_quality_type == "korean_standard":
-        if grade == "낮음": # 좋음 수준으로 반환
-            return 2
-        elif grade == "높음": # 나쁨 수준으로 반환
-                return 3
-    elif air_quality_type == "who_standard":
-        if grade == "낮음":
-            return 2 # 보통 수준으로 반환
-        elif grade == "높음":
-            return 5 # 나쁨 수준으로 반환
     
         

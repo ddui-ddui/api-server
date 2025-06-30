@@ -224,7 +224,35 @@ def calculate_air_quality_sensitive_score(pm10_grade: int, pm10_value: int, pm25
     air_quality_sensitive_score = (pm25_sensitive_total * pm25_weight) + (pm10_sensitive_total * pm10_weight)
 
     return int(air_quality_sensitive_score * 5)
+
+def convert_grade_to_value_for_week(grade: str, air_quality_type: str) -> int:
+    """
+    기상청 문서 기준
+    초미세먼지 일평균 농도 "낮음"은 PM2.5 농도 0∼35 ㎍/㎥이며, "높음"은 PM2.5 농도 36 ㎍/㎥ 이상입니다.
+    :param grade: 등급
+    :return: 등급 점수
+    """    
+    if air_quality_type == "korean_standard":
+        if grade == "낮음": # 좋음 수준으로 반환
+            return 2
+        elif grade == "높음": # 나쁨 수준으로 반환
+                return 3
+    elif air_quality_type == "who_standard":
+        if grade == "낮음":
+            return 2 # 보통 수준으로 반환
+        elif grade == "높음":
+            return 5 # 나쁨 수준으로 반환
     
+def convert_grade_to_value_for_hour(grade):
+    if grade == "좋음":
+        return 1
+    elif grade == "보통":
+        return 2
+    elif grade == "나쁨":
+        return 3
+    elif grade == "매우나쁨":
+        return 4
+    return 2
 
 
 # "base_grades": [
