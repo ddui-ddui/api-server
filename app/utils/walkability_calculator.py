@@ -52,15 +52,17 @@ class WalkabilityCalculator:
             walkability_score = round(max(0, min(100, combined_score)))
 
             if walkability_score >= 80:
-                walkability_grade = 1
+                walkability_grade = 5
             elif walkability_score >= 60:
-                walkability_grade = 2
+                walkability_grade = 4
             elif walkability_score >= 40:
                 walkability_grade = 3
             elif walkability_score >= 20:
-                walkability_grade = 4
+                walkability_grade = 2
+            elif walkability_score >= 0:
+                walkability_grade = 1
             else:
-                walkability_grade = 5
+                walkability_grade = 6
 
             return {
                 "walkability_score": walkability_score,
