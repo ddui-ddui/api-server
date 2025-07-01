@@ -11,6 +11,7 @@ from app.core.air_quality_schedule import air_quality_scheduler
 import time
 import uuid
 
+
 logger = get_logger()
 
 # log_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
@@ -23,38 +24,18 @@ logger = get_logger()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # try:
-    #     logger.info("=== Redis 연결 확인 ===")
-    #     redis = await redis_client.get_client()
-    #     ping_result = await redis.ping()
-    #     logger.info(f"Redis 연결 성공: {ping_result}")
-        
-    #     # 간단한 테스트 - SET
-    #     await redis.set("test_key", "test_value", ex=10)
-    #     test_value = await redis.get("test_key")
-    #     logger.info(f"Redis SET/GET 테스트 성공: {test_value}")
-        
-    #     # 삭제 테스트 - DELETE
-    #     delete_result = await redis.delete("test_key")
-    #     logger.info(f"Redis DELETE 테스트 성공: {delete_result}개 삭제")
-        
-    #     # 삭제 확인
-    #     check_value = await redis.get("test_key")
-    #     logger.info(f"Redis 삭제 확인: {check_value}")
-        
-    #     logger.info("🎉 Redis 모든 테스트 통과!")
-        
-    # except Exception as e:
-    #     logger.error(f"Redis 연결 실패: {str(e)}")
-    #     logger.error(f"Redis 서버가 {settings.REDIS_HOST}:{settings.REDIS_PORT}에서 실행 중인지 확인하세요")
+    global scheduler
+    try:
+        logger.info("서버 시작 - 캐시 초기화 시작")
+        await initialize_cache_on_startup()
+        logger.info("서버 시작 - 캐시 초기화 완료")
 
-
-    logger.info("서버 시작 - 캐시 초기화 시작")
-    await initialize_cache_on_startup()
-    logger.info("서버 시작 - 캐시 초기화 완료")
-
-    logger.info("스케줄러 시작")
-    air_quality_scheduler.start()
+        air_quality_scheduler.start()
+        
+    except Exception as e:
+        logger.error(f"lifespan 에러: {str(e)}")
+        import traceback
+        logger.error(f"상세 에러: {traceback.format_exc()}")
     
     yield
     
