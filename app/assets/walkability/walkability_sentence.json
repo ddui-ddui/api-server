@@ -1,11 +1,11 @@
 {
   "sentences": [
     {
-      "grade": 1,
+      "grade": 5,
       "clothing": "산책하기 최적의 날씨예요"
     },
     {
-      "grade": 2,
+      "grade": 4,
       "clothing": "산책하기 좋은 날씨예요"
     },
     {
@@ -13,11 +13,11 @@
       "clothing": "산책하기 무난한 날씨예요"
     },
     {
-      "grade": 4,
+      "grade": 2,
       "clothing": "산책하기 좋지 않은 날씨예요"
     },
     {
-      "grade": 5,
+      "grade": 1,
       "clothing": "아주 잠깐만 산책하길 추천해요"
     },
     {
