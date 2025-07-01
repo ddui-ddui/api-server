@@ -1,8 +1,34 @@
+from datetime import time, datetime, timedelta
 import re
 import sys
 from loguru import logger
 from app.core.config import settings
 from app.config.context import request_id, client_ip
+
+class Rotator:
+    def __init__(self, size, at):
+        self._size = size
+        now = datetime.now()
+        today_at_time = now.replace(hour=at.hour, minute=at.minute, second=at.second)
+        if now >= today_at_time:
+            self._next_rotate = today_at_time + timedelta(days=1)
+        else:
+            self._next_rotate = today_at_time
+
+    def should_rotate(self, message, file):
+        file.seek(0, 2)
+
+        if file.tell() + len(message) > self._size:
+            return True
+        if message.record["time"].timestamp() > self._next_rotate.timestamp():
+            self._next_rotate += timedelta(days=1)
+            return True
+        return False
+
+rotator = Rotator(
+    size=5 * 1024 * 1024, # 5 MB
+    at=time(hour=0, minute=0, second=0)
+)
 
 # 민감한 정보 마스킹 함수
 def mask_sensitive_data(message: str) -> str:
@@ -65,15 +91,15 @@ def setup_logging():
     )
     
     # 운영 환경에서만 파일 핸들러 추가
-    if settings.ENVIRONMENT == "production":
-        logger.add(
-            "logs/app_{time:YYYY-MM-DD HH:mm:ss}.log",
-            format=log_format,
-            level=log_level,
-            rotation="100 MB",  # 자정마다 새 파일 생성
-            retention="30 days",
-            filter=format_record
-        )
+    # if settings.ENVIRONMENT == "production":
+    logger.add(
+        "logs/app.log",
+        format=log_format,
+        level=log_level,
+        rotation=rotator.should_rotate,
+        # retention="30 days",
+        filter=format_record
+    )
 
 def get_logger():
     return logger
