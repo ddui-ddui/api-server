@@ -35,42 +35,30 @@ def handle_response_error(response_code: str, response_msg: str) -> None:
     # if response_code in service_key_error_codes:
     #     logger.warning(f"서비스 키 관련 에러 발생 (Code: {response_code}), 강제 로테이션 수행")
     #     service_key_rotator.force_rotate()
+    error_messages = {
+        "01": "어플리케이션 에러",
+        "02": "데이터베이스 에러", 
+        "03": "데이터없음",
+        "04": "HTTP 에러",
+        "05": "서비스 연결실패",
+        "10": "잘못된 요청 파라메터",
+        "11": "필수요청 파라메터 없음",
+        "12": "해당 오픈API서비스 없음",
+        "20": "서비스 접근거부",
+        "21": "일시적으로 사용불가 서비스키",
+        "22": "서비스 요청제한횟수 초과",
+        "30": "등록되지 않은 서비스키",
+        "31": "기한만료 서비스키",
+        "32": "등록되지 않은 IP",
+        "33": "서명되지 않은 호출",
+        "99": "기타에러"
+    }
 
-    if response_code == "01":  # APPLICATION_ERROR
-        raise HTTPException(status_code=500, detail=f"어플리케이션 에러: {response_msg}")
-    elif response_code == "02":  # DB_ERROR
-        raise HTTPException(status_code=500, detail=f"데이터베이스 에러: {response_msg}")
-    elif response_code == "03":  # NODATA_ERROR
-        raise HTTPException(status_code=404, detail=f"데이터없음: {response_msg}")
-    elif response_code == "04":  # HTTP_ERROR
-        raise HTTPException(status_code=500, detail=f"HTTP 에러: {response_msg}")
-    elif response_code == "05":  # SERVICETIME_OUT
-        raise HTTPException(status_code=503, detail=f"서비스 연결실패: {response_msg}")
-    elif response_code == "10":  # INVALID_REQUEST_PARAMETER_ERROR
-        raise HTTPException(status_code=400, detail=f"잘못된 요청 파라메터: {response_msg}")
-    elif response_code == "11":  # NO_MANDATORY_REQUEST_PARAMETERS_ERROR
-        raise HTTPException(status_code=400, detail=f"필수요청 파라메터 없음: {response_msg}")
-    elif response_code == "12":  # NO_OPENAPI_SERVICE_ERROR
-        raise HTTPException(status_code=404, detail=f"해당 오픈API서비스 없음: {response_msg}")
-    elif response_code == "20":  # SERVICE_ACCESS_DENIED_ERROR
-        raise HTTPException(status_code=403, detail=f"서비스 접근거부: {response_msg}")
-    elif response_code == "21":  # TEMPORARILY_DISABLE_THE_SERVICEKEY_ERROR
-        raise HTTPException(status_code=503, detail=f"일시적으로 사용불가 서비스키: {response_msg}")
-    elif response_code == "22":  # LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR
-        raise HTTPException(status_code=429, detail=f"서비스 요청제한횟수 초과: {response_msg}")
-    elif response_code == "30":  # SERVICE_KEY_IS_NOT_REGISTERED_ERROR
-        raise HTTPException(status_code=401, detail=f"등록되지 않은 서비스키: {response_msg}")
-    elif response_code == "31":  # DEADLINE_HAS_EXPIRED_ERROR
-        raise HTTPException(status_code=401, detail=f"기한만료 서비스키: {response_msg}")
-    elif response_code == "32":  # UNREGISTERED_IP_ERROR
-        raise HTTPException(status_code=403, detail=f"등록되지 않은 IP: {response_msg}")
-    elif response_code == "33":  # UNSIGNED_CALL_ERROR
-        raise HTTPException(status_code=401, detail=f"서명되지 않은 호출: {response_msg}")
-    elif response_code == "99":  # UNKNOWN_ERROR
-        raise HTTPException(status_code=500, detail=f"기타에러: {response_msg}")
-    else:
-        # 예상하지 못한 에러 코드
-        raise HTTPException(status_code=500, detail=f"알 수 없는 에러 코드({response_code}): {response_msg}")
+    error_description = error_messages.get(response_code, f"알 수 없는 에러 코드({response_code})")
+    detail_message = f"외부 API 에러: {error_description} - {response_msg}"
+    
+    raise HTTPException(status_code=502, detail=detail_message)
+
 
 async def make_request(
     url: str, 
