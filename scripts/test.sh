@@ -3,8 +3,8 @@ echo "Running tests..."
 
 # 라이브러리 설치
 echo "Installing dependencies..."
-pip3 install --upgrade pip
-pip3 install -r app/requirements.txt
+pip3.11 install --upgrade pip
+pip3.11 install -r app/requirements.txt
 
 # 테스트
 echo "Running tests..."
