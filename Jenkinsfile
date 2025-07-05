@@ -18,9 +18,9 @@ pipeline {
         }
         
         stage('Deploy to Staging') {
-            when {
-                branch 'staging'
-            }
+            // when {
+            //     branch 'staging'
+            // }
             steps {
                 echo '🚀 Deploying to staging...'
                 sh 'chmod +x scripts/deploy-staging.sh'
