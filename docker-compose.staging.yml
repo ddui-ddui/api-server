@@ -7,5 +7,5 @@ services:
       - .env
     volumes:
       # - ./:/app
-      - ./logs:/app/logs
+      - /Users/odong_buzzi/workspace/dduiddui/api-dev-server/logs:/app/logs
     restart: always
