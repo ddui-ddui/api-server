@@ -213,7 +213,7 @@ async def get_hourly_air_quality(lat: float, lon: float, hours: int = 12) -> Dic
         
         cache_data = HourlyAirQualityCache(
             forecasts=raw_data,
-            cached_at=datetime.now()
+            cached_at=datetime.now().isoformat()
         )
         await AirQualityCacheService().set_hourly_cache(cache_data)
         
@@ -395,7 +395,7 @@ async def get_weekly_air_quality(lat: float, lon: float, air_quality_type: str, 
         # 가공된 데이터를 캐시에 저장
         cache_data = WeeklyAirQualityCache(
             forecasts=processed_forecasts,  # 가공된 전국 데이터 저장
-            cached_at=datetime.now()
+            cached_at=datetime.now().isoformat()
         )
         await AirQualityCacheService().set_weekly_cache(cache_data)
         
