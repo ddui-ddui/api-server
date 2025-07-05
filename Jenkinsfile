@@ -19,7 +19,7 @@ pipeline {
         
         stage('Deploy to Staging') {
             when {
-                branch 'develop'
+                branch 'staging'
             }
             steps {
                 echo '🚀 Deploying to staging...'
