@@ -210,7 +210,6 @@ async def get_hourly_air_quality(lat: float, lon: float, hours: int = 12) -> Dic
         now = datetime.now()
         param_date = now.strftime("%Y-%m-%d")
         raw_data = await fetch_hourly_air_quality_raw(param_date)
-        
         cache_data = HourlyAirQualityCache(
             forecasts=raw_data,
             cached_at=datetime.now().isoformat()
