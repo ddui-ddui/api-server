@@ -52,5 +52,5 @@ class RedisClient:
 # 전역 Redis 클라이언트
 redis_client = RedisClient()
 
-async def get_redis() -> redis.Redis:
+async def get_redis_client() -> redis.Redis:
     return await redis_client.get_client()

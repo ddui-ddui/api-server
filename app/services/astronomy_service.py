@@ -30,8 +30,8 @@ async def get_sunrise_sunset(lat: float, lon: float, retry_days:int = 0) -> dict
     # Request URL
     params = {
         "locdate"	: date_str,
-        "longitude": f"{lon:.6f}",	
-        "latitude"	: f"{lat:.6f}",
+        "longitude": lon,	
+        "latitude"	: lat,
         "dnYn" : "Y"
     }
     url = f"{settings.GOV_DATA_BASE_URL}{settings.GOV_DATA_ASTRONOMY_SUN_URL}"
