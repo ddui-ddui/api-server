@@ -62,4 +62,4 @@ class AirQualityCacheService:
         except Exception as e:
             logger.error(f"주간별 캐시 저장 실패: {str(e)}")
 
-redis_service = AirQualityCacheService()
+air_quality_cache_service = AirQualityCacheService()
