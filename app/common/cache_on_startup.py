@@ -1,7 +1,7 @@
 from datetime import datetime
 from app.models.air_quality import HourlyAirQualityCache, WeeklyAirQualityCache
 from app.services.air_quality import fetch_hourly_air_quality_raw, process_weekly_air_quality_for_cache
-from app.services.cache_service import AirQualityCacheService, redis_service
+from app.services.cache_service import AirQualityCacheService, air_quality_cache_service
 import logging
 
 logger = logging.getLogger()
@@ -12,7 +12,7 @@ async def initialize_cache_on_startup():
         logger.info("캐시 초기화 시작")
         
         # 1. 시간별 캐시 확인
-        hourly_cache = await redis_service.get_hourly_cache()
+        hourly_cache = await air_quality_cache_service.get_hourly_cache()
         if hourly_cache is None:
             logger.info("시간별 캐시 없음 - 초기 데이터 로드 필요")
             await initialize_hourly_cache()
@@ -20,7 +20,7 @@ async def initialize_cache_on_startup():
             logger.info("시간별 캐시 존재")
         
         # 2. 주간별 캐시 확인  
-        weekly_cache = await redis_service.get_weekly_cache()
+        weekly_cache = await air_quality_cache_service.get_weekly_cache()
         if weekly_cache is None:
             logger.info("주간별 캐시 없음 - 초기 데이터 로드 필요")
             await initialize_weekly_cache()
