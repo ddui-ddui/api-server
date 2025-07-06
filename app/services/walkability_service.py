@@ -1,7 +1,8 @@
-import datetime
+import json
 from typing import Any, Dict
 
 from fastapi import HTTPException
+from app.config.redis_config import get_redis_client
 from app.services.weather_service import get_ultra_short_forecast, get_hourly_forecast, get_weekly_forecast, get_weather_uvindex
 from app.services.astronomy_service import get_sunrise_sunset
 from app.services.air_quality import get_current_air_quality, get_hourly_air_quality, get_weekly_air_quality
@@ -357,8 +358,26 @@ async def get_walkability_weekly(
 async def get_walkability_current_detail(
     lat: float, 
     lon: float) -> Dict[str, Any]:
-    
-    # 현재 날씨 상세 정보 조회
+    """
+    현재 날씨 상세 정보 조회
+    :param lat: 위도
+    :param lon: 경도
+    :return: 현재 날씨 상세 정보
+    """
+
+    # 캐시 체크
+    cache_key = f"walkability:current:{lat}:{lon}"
+    try:
+        redis = await get_redis_client()
+        cached_data = await redis.get(cache_key)
+        if cached_data:
+            logger.info(f"캐시에서 현재 날씨 상세 정보 조회: {cache_key}")
+            return {"forecasts": json.loads(cached_data)}
+    except Exception as e:
+        logger.warning(f"캐시 조회 실패, 새로운 데이터 조회: {str(e)}")
+
+
+    # 캐시 없으면 API 호출 조회
     fields = ["temperature", "humidity", "wind_speed", "rainfall"]
     try:
         weather_data = await get_ultra_short_forecast(lat, lon, fields)
@@ -410,6 +429,14 @@ async def get_walkability_current_detail(
     results = {
         "weather": weather_data
     }
+
+    # 캐시 저장
+    try:
+        await redis.set(cache_key, json.dumps(results, default=str), ex=3600)
+        logger.info(f"현재 날씨 상세 정보 캐시에 저장: {cache_key}")
+    except Exception as e:
+        logger.warning(f"캐시 저장 실패: {str(e)}")
+
     return {"forecasts": results}
 
 def _walkability_calculator(
