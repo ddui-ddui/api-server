@@ -5,6 +5,8 @@ services:
       - "${PORT:-4500}:${PORT:-4500}"
     env_file:
       - .env
+    environment:
+      - TZ=Asia/Seoul
     volumes:
       # - ./:/app
       - /Users/odong_buzzi/workspace/dduiddui/api-dev-server/logs:/app/logs
