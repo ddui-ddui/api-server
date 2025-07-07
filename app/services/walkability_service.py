@@ -9,11 +9,13 @@ from app.services.air_quality import get_current_air_quality, get_hourly_air_qua
 from app.utils.walkability_calculator import WalkabilityCalculator
 from app.utils.airquality_calculator import calculate_combined_air_quality_score
 from app.utils.temperature_calculator import calculate_apparent_temperature
+from app.utils.cache_utils import calculate_ttl_to_next_period
 from app.config.logging_config import get_logger
 logger = get_logger()
 
 # 산책 적합도 계산기
 walkability_calculator = WalkabilityCalculator()
+
 async def get_walkability_current(
     lat: float, 
     lon: float, 
@@ -432,8 +434,9 @@ async def get_walkability_current_detail(
 
     # 캐시 저장
     try:
-        await redis.set(cache_key, json.dumps(results, default=str), ex=3600)
-        logger.info(f"현재 날씨 상세 정보 캐시에 저장: {cache_key}")
+        ttl_seconds = calculate_ttl_to_next_period("hour")
+        await redis.set(cache_key, json.dumps(results, default=str), ex=ttl_seconds)
+        logger.info(f"현재 날씨 상세 정보 캐시에 저장: {cache_key}, TTL: {ttl_seconds}초")
     except Exception as e:
         logger.warning(f"캐시 저장 실패: {str(e)}")
 
