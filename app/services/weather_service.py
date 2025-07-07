@@ -1,7 +1,10 @@
+import json
 from fastapi import HTTPException
+from app.config.redis_config import get_redis_client
 from app.core.config import settings
 from typing import Any, Dict, List
 from datetime import datetime, timedelta
+from app.utils.cache_utils import calculate_ttl_to_next_mid_forecast, calculate_ttl_to_next_short_forecast
 from app.utils.convert_for_grid import mapToGrid
 from app.common.http_client import make_request
 from urllib.parse import unquote
@@ -234,6 +237,17 @@ async def get_hourly_forecast(lat: float, lon: float, hours: int = 12) -> Dict[s
     :return: 시간별 예보 데이터 리스트
     """
     nx, ny = mapToGrid(lat, lon)
+
+    # 캐시 조회
+    cache_key = f"weather:hourly:{nx}:{ny}:{hours}"
+    try:
+        redis = await get_redis_client()
+        cached_data = await redis.get(cache_key)
+        if cached_data:
+            logger.info(f"캐시에서 시간별 날씨 예보 조회: {cache_key}")
+            return json.loads(cached_data)
+    except Exception as e:
+        logger.warning(f"캐시 조회 실패, 새로운 데이터 조회: {str(e)}")
     
     now = datetime.now()
     base_date = now.strftime("%Y%m%d")
@@ -352,6 +366,15 @@ async def get_hourly_forecast(lat: float, lon: float, hours: int = 12) -> Dict[s
         result = {
             "forecasts": result_forecasts
         }
+
+        # 캐시 저장 (다음 단기예보 발표 시간까지)
+        try:
+            ttl_seconds = calculate_ttl_to_next_short_forecast()
+            await redis.set(cache_key, json.dumps(result, default=str), ex=ttl_seconds)
+            logger.info(f"시간별 날씨 예보 캐시에 저장: {cache_key}, TTL: {ttl_seconds}초")
+        except Exception as e:
+            logger.warning(f"캐시 저장 실패: {str(e)}")
+        
         return result
             
     except HTTPException:
@@ -476,6 +499,18 @@ async def get_weekly_forecast(lat: float, lon: float, days: int = 7) -> Dict[str
     """
     # 격자 좌표 변환
     nx, ny = mapToGrid(lat, lon)
+
+    cache_key = f"weather:weekly:{nx}:{ny}:{days}"
+    
+    # 캐시 조회
+    try:
+        redis = await get_redis_client()
+        cached_data = await redis.get(cache_key)
+        if cached_data:
+            logger.info(f"캐시에서 주간 날씨 예보 조회: {cache_key}")
+            return json.loads(cached_data)
+    except Exception as e:
+        logger.warning(f"캐시 조회 실패, 새로운 데이터 조회: {str(e)}")
     
     # 현재 시간 기준
     now = datetime.now()
@@ -574,8 +609,18 @@ async def get_weekly_forecast(lat: float, lon: float, days: int = 7) -> Dict[str
     # 날짜순 정렬
     weekly_forecast.sort(key=lambda x: x["base_date"])
     weekly_forecast = weekly_forecast[:days]
+
+    result = {'forecasts': weekly_forecast}
+
+    # 캐시 저장
+    try:
+        ttl_seconds = calculate_ttl_to_next_mid_forecast()
+        await redis.set(cache_key, json.dumps(result, default=str), ex=ttl_seconds)
+        logger.info(f"주간 날씨 예보 캐시에 저장: {cache_key}, TTL: {ttl_seconds}초")
+    except Exception as e:
+        logger.warning(f"캐시 저장 실패: {str(e)}")
     
-    return {'forecasts': weekly_forecast}
+    return result
 
 # 단기예보(주간예보용)
 async def get_short_range_forecast(nx: int, ny: int) -> List[Dict[str, Any]]:
