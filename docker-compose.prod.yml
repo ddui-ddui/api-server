@@ -9,5 +9,5 @@ services:
       - TZ=Asia/Seoul
     volumes:
       # - ./:/app
-      - ./logs:/app/logs
+      - /Users/odong_buzzi/workspace/dduiddui/api-server/logs:/app/logs
     restart: always
