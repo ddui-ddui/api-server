@@ -49,7 +49,7 @@ class WalkabilityCalculator:
             
             combined_score = round((temperature_final_score * 0.6) + (air_quality_final_score * 0.4))
             logger.info(f"기온 최종 점수: {temperature_final_score}, 대기질 최종 점수: {air_quality_final_score}")
-            logger.info(f"가중치 별 점수 - 기온: {temperature_final_score * 0.6}, 대기질: {air_quality_final_score * 0.4}")
+            logger.info(f"가중치 별 점수 - 기온: {round(temperature_final_score * 0.6)}, 대기질: {round(air_quality_final_score * 0.4)}")
             logger.info(f"최종 점수: {combined_score}")
             walkability_score = round(max(0, min(100, combined_score)))
 
