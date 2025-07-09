@@ -18,9 +18,9 @@ pipeline {
         }
         
         stage('Deploy to Production') {
-            when {
-                branch 'main'
-            }
+            // when {
+            //     branch 'main'
+            // }
             steps {
                 echo '🚀 Deploying to prod...'
                 sh 'chmod +x scripts/deploy-prod.sh'
