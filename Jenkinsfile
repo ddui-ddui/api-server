@@ -2,13 +2,6 @@ pipeline {
     agent any
     
     stages {
-        // stage('Checkout') {
-        //     steps {
-        //         echo '📥 Checking out code...'
-        //         // Git checkout은 자동으로 수행됨
-        //     }
-        // }
-        
         stage('Test') {
             steps {
                 echo '🧪 Running tests...'
@@ -19,7 +12,7 @@ pipeline {
         
         stage('Deploy to Staging') {
             steps {
-                echo '🚀 Deploying to staging...'
+                echo 'Deploying to staging...'
                 sh 'chmod +x scripts/deploy-staging.sh'
 
                 script {
@@ -27,37 +20,28 @@ pipeline {
                         sh './scripts/deploy-staging.sh'
                         env.DEPLOYMENT_STATUS = 'SUCCESS'
                     } catch (Exception e) {
-                        echo "❌ Deployment failed: ${e.getMessage()}"
+                        echo "Deployment failed: ${e.getMessage()}"
                         env.DEPLOYMENT_STATUS = 'FAILED'
-                        throw e
+                        currentBuild.result = 'UNSTABLE'
                     }
                 }
             }
-        }
-
-        stage('Rollback on Failure') {
-            when {
-                environment name: 'DEPLOYMENT_STATUS', value: 'FAILED'
-            }
-            steps {
-                echo '🔄 Starting rollback...'
-                sh 'chmod +x scripts/roll-back.sh'
-                sh './scripts/roll-back.sh'
+            post {
+                unstable {
+                    echo 'Starting rollback due to deployment failure...'
+                    sh 'chmod +x scripts/roll-back.sh'
+                    sh './scripts/roll-back.sh'
+                }
             }
         }
     }
     
     post {
-        failure {
-            echo '❌ Pipeline failed!'
-            script {
-                if (env.DEPLOYMENT_STATUS == 'FAILED') {
-                    echo '🔄 Rollback was attempted'
-                }
-            }
+        unstable {
+            echo 'Pipeline unstable - rollback completed'
         }
         success {
-            echo '✅ Pipeline succeeded!'
+            echo 'Pipeline succeeded!'
         }
     }
 }
