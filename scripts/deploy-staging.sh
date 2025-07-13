@@ -14,7 +14,7 @@ if ! docker-compose -f docker-compose.staging.yml up --build -d; then
 fi
 
 echo "Waiting for services to start..."
-sleep 10
+sleep 15
 
 # 서비스 상태 확인
 echo "Checking container status..."
@@ -28,7 +28,7 @@ fi
 # 헬스체크 엔드포인트 확인
 echo "Performing health check..."
 HEALTH_CHECK_URL="http://127.0.0.1:4500/api/v1/health"
-MAX_ATTEMPTS=10
+MAX_ATTEMPTS=15
 ATTEMPT=1
 
 while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
