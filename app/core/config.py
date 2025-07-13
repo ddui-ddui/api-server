@@ -17,17 +17,17 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "DDUI DDUI API Server"
 
     # Server Info
-    HOST: str = "127.0.0.1"
-    PORT: int = 3500
-    WORKERS: int = 1
-    TIMEOUT: int = 30
-    RELOAD: bool = False
+    HOST: str = Field(default="127.0.0.1", env="HOST")
+    PORT: int = Field(default=3500, env="PORT")
+    WORKERS: int = Field(default=1, env="WORKERS")
+    TIMEOUT: int = Field(default=30, env="TIMEOUT")
+    RELOAD: bool = Field(default=False, env="RELOAD")
     
     # Logging
-    LOG_LEVEL: str = "info"
+    LOG_LEVEL: str = Field(default="debug", env="LOG_LEVEL")
 
     # SSL
-    SSL_VERIFY: bool = True
+    SSL_VERIFY: bool = Field(default=False, env="SSL_VERIFY")
 
     # GOV API INFO
     GOV_DATA_API_KEY_1: str = ""
