@@ -27,7 +27,7 @@ fi
 
 # 헬스체크 엔드포인트 확인
 echo "Performing health check..."
-HEALTH_CHECK_URL="http://127.0.0.1:3500/api/v1/health"
+HEALTH_CHECK_URL="http://127.0.0.1:4500/api/v1/health"
 MAX_ATTEMPTS=10
 ATTEMPT=1
 
