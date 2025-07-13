@@ -116,17 +116,22 @@ def convert_lat_lon_for_region(lat: float, lon: float) -> str:
     closest_region = None
     min_distance = float('inf')
     
-    for region in ZONE_DATA:
-        if "latitude" in region and "longitude" in region:
-            distance = ((lat - region["latitude"]) ** 2 + (lon - region["longitude"]) ** 2) ** 0.5
-            
-            if distance < min_distance:
-                min_distance = distance
-                closest_region = region
+    try:
+        for region in ZONE_DATA:
+            if "latitude" in region and "longitude" in region:
+                distance = ((lat - region["latitude"]) ** 2 + (lon - region["longitude"]) ** 2) ** 0.5
+                
+                if distance < min_distance:
+                    min_distance = distance
+                    closest_region = region
 
-    if closest_region and 'subregion' in closest_region and closest_region['subregion']:
-        return closest_region
-    else:
-        logger.info("지역을 찾을 수 없습니다. 기본 지역으로 설정합니다.")
+        if closest_region and 'subregion' in closest_region and closest_region['subregion']:
+            return closest_region
+        else:
+            logger.info("지역을 찾을 수 없습니다. 기본 지역으로 설정합니다.")
+            logger.info(f"요청된 위도/경도: ({lat}, {lon})")
+            return default_region
+    except Exception as e:
+        logger.error(f"지역 변환 중 오류 발생: {str(e)}")
         logger.info(f"요청된 위도/경도: ({lat}, {lon})")
         return default_region
