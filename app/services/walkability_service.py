@@ -246,7 +246,7 @@ async def get_walkability_weekly(
         logger.error(f"일자 조회 오류: {days}일은 최대 7일까지만 가능합니다.")
         raise HTTPException(status_code=400, detail="최대 7일까지만 조회 가능합니다.")
 
-    # 시간별 날씨 정보 조회
+    # 주간별 날씨 정보 조회
     try:
         weather_data = await get_weekly_forecast(lat, lon, days)
         if not weather_data:
@@ -258,7 +258,7 @@ async def get_walkability_weekly(
         logger.error(f"주간별 날씨 조회 중 예상치 못한 오류: {str(e)}")
         raise HTTPException(status_code=500, detail="주간별 날씨 서비스 오류")
     
-    # 시간별 대기질 정보 조회
+    # 주간별 대기질 정보 조회
     try:
         airquality_data = await get_weekly_air_quality(lat, lon, air_quality_type, days)
         if not airquality_data:
@@ -368,7 +368,7 @@ async def get_walkability_current_detail(
     """
 
     # 캐시 체크
-    cache_key = f"walkability:current:{lat}:{lon}"
+    cache_key = f"walkability:current:detail:{lat}:{lon}"
     try:
         redis = await get_redis_client()
         cached_data = await redis.get(cache_key)
