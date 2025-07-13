@@ -491,20 +491,25 @@ def extract_region_data_from_cache(cached_forecasts: List[Dict], lat: float, lon
     
     results = []
     
-    for i in range(min(days, len(cached_forecasts))):
-        forecast = cached_forecasts[i]
-        all_regions_data = forecast.get("all_regions_data", "")
+    try:
+        for i in range(min(days, len(cached_forecasts))):
+            forecast = cached_forecasts[i]
+            all_regions_data = forecast.get("all_regions_data", "")
+            
+            # 사용자 지역 데이터만 추출
+            region_value = parse_region_data(all_regions_data, region)
+            grade = convert_grade_to_value_for_week(region_value, air_quality_type)
+            
+            results.append({
+                "base_date": forecast.get("base_date"),
+                "air_quality_score": grade
+            })
         
-        # 사용자 지역 데이터만 추출
-        region_value = parse_region_data(all_regions_data, region)
-        grade = convert_grade_to_value_for_week(region_value, air_quality_type)
-        
-        results.append({
-            "base_date": forecast.get("base_date"),
-            "air_quality_score": grade
-        })
-    
-    return {"forecasts": results}
+        return {"forecasts": results}
+    except Exception as e:
+        logger.error(f"캐시된 주간 대기질 데이터 처리 오류: {str(e)}")
+        logger.error(f"요청된 위도 경도: ({lat}, {lon}), 지역: {region}")
+        raise HTTPException(status_code=500, detail="캐시된 주간 대기질 데이터 처리 오류")
 
 async def process_weekly_air_quality_for_cache() -> List[Dict[str, Any]]:
     """
