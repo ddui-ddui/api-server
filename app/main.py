@@ -53,14 +53,18 @@ app = FastAPI(
     lifespan=lifespan,
     docs_url="/docs",
     openapi_tags=[
-        # {
-        #     "name": "weather",
-        #     "description": "산책 적합도 관련 API",
-        # },
         {
             "name": "walkability",
             "description": "산책 적합도 관련 API",
-        }
+        },
+        {
+            "name": "cache check",
+            "description": "캐시 관련 API",
+        },
+        {
+            "name": "commons",
+            "description": "공통 API (헬스 체크 등)",
+        },
     ],
 )
 
