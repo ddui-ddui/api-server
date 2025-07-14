@@ -32,7 +32,7 @@ sleep 15
 
 # 롤백 헬스체크
 echo "Performing rollback health check..."
-HEALTH_CHECK_URL="http://211.206.133.190:4500/api/v1/health"
+HEALTH_CHECK_URL="http://211.206.133.190:4500/api/v1/commons/health"
 MAX_ATTEMPTS=10
 ATTEMPT=1
 
