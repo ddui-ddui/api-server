@@ -500,7 +500,8 @@ async def get_weekly_forecast(lat: float, lon: float, days: int = 7) -> Dict[str
     # 격자 좌표 변환
     nx, ny = mapToGrid(lat, lon)
 
-    cache_key = f"weather:weekly:{nx}:{ny}:{days}"
+    today = datetime.now().strftime("%Y%m%d")
+    cache_key = f"weather:weekly:{nx}:{ny}:{days}:{today}"
     
     # 캐시 조회
     try:
