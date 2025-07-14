@@ -1,10 +1,55 @@
 #!/bin/bash
-echo "Production deploy starting..."
+echo "prod deploy starting..."
 
 # 기존 컨테이너 종료
-docker-compose -f docker-compose.prod.yml down
+if ! docker-compose -f docker-compose.prod.yml down; then
+    echo "Failed to stop containers"
+    exit 1
+fi
 
 # 새 버전 배포
-docker-compose -f docker-compose.prod.yml up --build -d
+if ! docker-compose -f docker-compose.prod.yml up --build -d; then
+    echo "Failed to deploy"
+    exit 1
+fi
 
-echo "Production deploy complete!"
+echo "Waiting for services to start..."
+sleep 15
+
+# 서비스 상태 확인
+echo "Checking container status..."
+if ! docker-compose -f docker-compose.prod.yml ps | grep -q "Up"; then
+    echo "Services are not running properly"
+    echo "Container logs:"
+    docker-compose -f docker-compose.prod.yml logs --tail=50
+    exit 1
+fi
+
+# 헬스체크 엔드포인트 확인
+echo "Performing health check..."
+HEALTH_CHECK_URL="https://dduiddui.kr/api/v1/commons/health"
+MAX_ATTEMPTS=15
+ATTEMPT=1
+
+while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+    echo "Health check attempt $ATTEMPT/$MAX_ATTEMPTS..."
+    
+    if curl -f -s "$HEALTH_CHECK_URL" > /dev/null 2>&1; then
+        echo "Health check passed!"
+        echo "prod deploy complete!"
+        exit 0
+    fi
+    
+    if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
+        echo "Health check failed after $MAX_ATTEMPTS attempts"
+        echo "Service logs:"
+        docker-compose -f docker-compose.prod.yml logs --tail=100
+        echo "Container status:"
+        docker-compose -f docker-compose.prod.yml ps
+        exit 1
+    fi
+    
+    echo "Waiting for service to be ready..."
+    sleep 2
+    ATTEMPT=$((ATTEMPT + 1))
+done

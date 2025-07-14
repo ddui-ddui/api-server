@@ -2,13 +2,6 @@ pipeline {
     agent any
     
     stages {
-        // stage('Checkout') {
-        //     steps {
-        //         echo '📥 Checking out code...'
-        //         // Git checkout은 자동으로 수행됨
-        //     }
-        // }
-        
         stage('Test') {
             steps {
                 echo '🧪 Running tests...'
@@ -17,24 +10,38 @@ pipeline {
             }
         }
         
-        stage('Deploy to Production') {
-            // when {
-            //     branch 'main'
-            // }
+        stage('Deploy to prod') {
             steps {
-                echo '🚀 Deploying to prod...'
+                echo 'Deploying to prod...'
                 sh 'chmod +x scripts/deploy-prod.sh'
-                sh './scripts/deploy-prod.sh'
+
+                script {
+                    try {
+                        sh './scripts/deploy-prod.sh'
+                        env.DEPLOYMENT_STATUS = 'SUCCESS'
+                    } catch (Exception e) {
+                        echo "Deployment failed: ${e.getMessage()}"
+                        env.DEPLOYMENT_STATUS = 'FAILED'
+                        currentBuild.result = 'UNSTABLE'
+                    }
+                }
+            }
+            post {
+                unstable {
+                    echo 'Starting rollback due to deployment failure...'
+                    sh 'chmod +x scripts/roll-back.sh'
+                    sh './scripts/roll-back.sh'
+                }
             }
         }
     }
     
     post {
-        failure {
-            echo '❌ Pipeline failed!'
+        unstable {
+            echo 'Pipeline unstable - rollback completed'
         }
         success {
-            echo '✅ Pipeline succeeded!'
+            echo 'Pipeline succeeded!'
         }
     }
 }
