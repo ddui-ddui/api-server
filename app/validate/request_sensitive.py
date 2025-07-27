@@ -3,7 +3,7 @@ from app.models.response import error_response
 
 
 ALLOWED_SENSITIVITIES = {
-    "puppy", "senior", "heart_disease", "respiratory", "obesity", "brachycephalic"
+    "puppy", "senior", "heart_disease", "respiratory_issue", "obesity", "brachycephalic"
 }
 
 def validate_sensitivities(sensitivities: str) -> str:
