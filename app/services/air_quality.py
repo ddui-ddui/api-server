@@ -180,12 +180,14 @@ async def get_air_quality_data(stations: List[str], air_quality_type: str = 'kor
             
             # 유효한 데이터를 찾았으므로 결과 반환
             pm10_grade, pm25_grade = calculate_individual_air_quality_score(pm10, pm25, air_quality_type)
+            worse_grade = max(pm10_grade, pm25_grade)
             
             results = {
                 "pm10_value": pm10,
                 "pm10_grade": pm10_grade,
                 "pm25_value": pm25,
                 "pm25_grade": pm25_grade,
+                "air_quality_grade": worse_grade,
             }
             return results
             
