@@ -203,7 +203,6 @@ async def get_air_quality_data(stations: List[str], air_quality_type: str = 'kor
 
 async def get_hourly_air_quality(lat: float, lon: float, hours: int = 12) -> Dict[str, Any]:
     cached_data = await AirQualityCacheService().get_hourly_cache()
-    print(f"캐시된 시간별 대기질 데이터: {cached_data}")
     if cached_data:
         logger.info("캐시된 시간별 대기질 데이터를 반환합니다.")
         return process_air_quality_data(cached_data.forecasts, lat, lon, hours)
@@ -221,99 +220,85 @@ async def get_hourly_air_quality(lat: float, lon: float, hours: int = 12) -> Dic
         
         return process_air_quality_data(raw_data, lat, lon, hours)
     
-def process_air_quality_data(raw_data: Dict[str, Any], lat: float, lon: float, hours: int) -> Dict[str, Any]:
+def process_air_quality_data(raw_data: Dict[str, any], lat: float, lon: float, hours: int) -> Dict[str, Any]:
     """시간별 대기질 데이터 가공 (캐시/API 공통 사용)"""
     now = datetime.now()
     current_hour = now.hour
-    current_minute = now.minute
     region_data = convert_lat_lon_for_region(lat, lon)
     region = region_data.get("subregion")
 
-    forecast_time = [5, 11, 17, 23]
-    closest_time = None
-    param_date = None
-
-    if current_hour < 5 or (current_hour == 5 and current_minute < 30):
-        closest_time = 23
-        param_date = (now - timedelta(days=1)).strftime("%Y-%m-%d")
-    else:
-        # 현재 시간 기준으로 가장 최근 발표 시간 찾기
-        for time in reversed(forecast_time):
-            if time == current_hour and current_minute < 30:
-                continue
-            if time <= current_hour:
-                closest_time = time
-                break
-        
-        if closest_time is None:
-            closest_time = 23
-            param_date = (now - timedelta(days=1)).strftime("%Y-%m-%d")
-        else:
-            param_date = now.strftime("%Y-%m-%d")
-
-    items = raw_data.get("response", {}).get("body", {}).get("items", [])
-    if not items:
-        logger.info("대기질 예보 데이터가 없습니다.")
-        return {'forecasts': []}
-        
-    closest_time_str = f"{closest_time}시 발표"
-    
-    today_pm10 = None
-    tomorrow_pm10 = None
-    today_pm25 = None
-    tomorrow_pm25 = None
-    
-    for item in items:
-        if closest_time_str in item.get("dataTime", ""):
-            if item.get("informCode") == "PM10":
-                if item.get("informData") == param_date:
-                    today_pm10 = item
-                elif item.get("informData") == (now + timedelta(days=1)).strftime("%Y-%m-%d"):
-                    tomorrow_pm10 = item
-            elif item.get("informCode") == "PM25":
-                if item.get("informData") == param_date:
-                    today_pm25 = item
-                elif item.get("informData") == (now + timedelta(days=1)).strftime("%Y-%m-%d"):
-                    tomorrow_pm25 = item
-    
-    if not today_pm10 or not today_pm25:
-        raise HTTPException(status_code=404, detail="오늘 대기질 예보 데이터를 찾을 수 없습니다.")
-    
     forecasts = []
     start_hour = current_hour + 1
     
     for i in range(hours):
-        forecast_hour = (start_hour + i) % 24
-        forecast_date = now.date()
+        forecast_datetime = now + timedelta(hours=i+1)
+        forecast_hour = forecast_datetime.hour
+        forecast_date = forecast_datetime.date()
         
-        if forecast_hour < start_hour and i > 0:
-            forecast_date = now.date() + timedelta(days=1)
+        # 데이터 조회용 날짜 문자열
+        forecast_date_str = forecast_date.strftime("%Y-%m-%d")
+        date_data = raw_data.get(forecast_date_str, {})
+
+        pm10_grade_str = None
+        pm25_grade_str = None
         
-        if forecast_date == now.date():
-            pm10_grade_str = parse_region_data(today_pm10.get("informGrade"), region)
-            pm25_grade_str = parse_region_data(today_pm25.get("informGrade"), region)
-        else:
-            # 내일 데이터가 없으면 오늘 데이터로 대체
-            if not tomorrow_pm10 or not tomorrow_pm25:
-                pm10_grade_str = parse_region_data(today_pm10.get("informGrade"), region)
-                pm25_grade_str = parse_region_data(today_pm25.get("informGrade"), region)
-            else:
-                pm10_grade_str = parse_region_data(tomorrow_pm10.get("informGrade"), region)
-                pm25_grade_str = parse_region_data(tomorrow_pm25.get("informGrade"), region) 
+        if date_data:
+            pm10_data = date_data.get("PM10", {})
+            pm25_data = date_data.get("PM25", {})
+            
+            # 두 데이터 모두 있는 시간만 고려
+            available_times = set(pm10_data.keys()) & set(pm25_data.keys())
+            
+            if available_times:
+                # 예보 시간보다 이른 시간 중 가장 최신 선택
+                valid_times = [t for t in available_times if int(t) <= forecast_hour]
+                
+                if valid_times:
+                    # 가장 최신 시간 선택
+                    latest_time = max(valid_times, key=lambda x: int(x))
+                else:
+                    # 예보 시간보다 이른 데이터가 없으면 전체에서 가장 최신
+                    latest_time = max(available_times, key=lambda x: int(x))
+                
+                pm10_grade_str = parse_region_data(pm10_data[latest_time], region)
+                pm25_grade_str = parse_region_data(pm25_data[latest_time], region)
+        
+        if not pm10_grade_str or not pm25_grade_str:
+            for days_back in range(1, 2):
+                prev_date = forecast_date - timedelta(days=days_back)
+                prev_date_str = prev_date.strftime("%Y-%m-%d")
+                prev_data = raw_data.get(prev_date_str, {})
+                
+                if prev_data:
+                    pm10_data = prev_data.get("PM10", {})
+                    pm25_data = prev_data.get("PM25", {})
+                    available_times = set(pm10_data.keys()) & set(pm25_data.keys())
+                    
+                    if available_times:
+                        # 가장 최신 시간 선택
+                        latest_time = max(available_times, key=lambda x: int(x))
+                        pm10_grade_str = parse_region_data(pm10_data[latest_time], region)
+                        pm25_grade_str = parse_region_data(pm25_data[latest_time], region)
+                        break
+        
+        # 여전히 데이터가 없으면 기본값 사용
+        if not pm10_grade_str or not pm25_grade_str:
+            pm10_grade_str = "보통"
+            pm25_grade_str = "보통"
     
         pm10_grade = convert_grade_to_value_for_hour(pm10_grade_str)
         pm25_grade = convert_grade_to_value_for_hour(pm25_grade_str)
             
         forecast_date_str = forecast_date.strftime("%Y%m%d")
-        forecast_hour = f"{forecast_hour:02d}00"
+        forecast_hour_str = f"{forecast_hour:02d}00"
         
         forecasts.append({
             "base_date": forecast_date_str,
-            "base_time": forecast_hour,
+            "base_time": forecast_hour_str,
             "pm10_grade": pm10_grade,
             "pm25_grade": pm25_grade
         })
-        
+
     return {"forecasts": forecasts}
     
 async def get_hourly_air_quality_from_api(lat: float, lon: float, hours: int = 12) -> Dict[str, Any]:
@@ -357,7 +342,7 @@ async def get_hourly_air_quality_from_api(lat: float, lon: float, hours: int = 1
     raw_data = await fetch_hourly_air_quality_raw(param_date)
     return process_air_quality_data(raw_data, lat, lon, hours)
 
-async def fetch_hourly_air_quality_raw(search_date: str) -> Dict[str, Any]:
+async def fetch_hourly_air_quality_raw(search_date: str) -> List[Dict[str, Any]]:
     """
     시간별 대기질 원본 데이터 조회 (날짜만 필요)
     :param search_date: 조회 날짜 (YYYY-MM-DD)
@@ -374,7 +359,42 @@ async def fetch_hourly_air_quality_raw(search_date: str) -> Dict[str, Any]:
     try:
         response = await make_request(url=url, params=params)
         data = response.json()
-        return data
+        temp_data = data['response']['body']['items']
+        results = []
+        # 불필요한 키 제거
+        keys_to_remove = [
+            "imageUrl1", "imageUrl2", "imageUrl3", "imageUrl4", "imageUrl5", "imageUrl6",
+            "actionKnack", "informCause", "informOverall"
+        ]
+        for key in keys_to_remove:
+            for data in temp_data:
+                if key in data:
+                    del data[key]
+
+        organized_data = {}
+
+        for item in temp_data:
+            if item['informCode'] in ["PM10", "PM25"]:
+                inform_data = item['informData']
+                inform_code = item['informCode']
+                data_time = item['dataTime']
+                inform_grade = item['informGrade']
+
+                hour = int(data_time.split(" ")[1].replace("시", ""))
+
+                if inform_data not in organized_data:
+                    organized_data[inform_data] = {}
+
+                if inform_code not in organized_data[inform_data]:
+                    organized_data[inform_data][inform_code] = {}
+
+            organized_data[inform_data][inform_code][hour] = inform_grade
+        
+        for date in organized_data:
+            for code in organized_data[date]:
+                organized_data[date][code] = dict(sorted(organized_data[date][code].items()))
+
+        return organized_data
     except Exception as e:
         logger.error(f"시간별 대기질 원본 데이터 조회 오류: {str(e)}")
         raise HTTPException(status_code=500, detail="시간별 대기질 원본 데이터 조회 오류")

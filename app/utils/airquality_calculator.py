@@ -177,8 +177,9 @@ def calculate_air_quality_sensitive_score(pm10_grade: int, pm10_value: int, pm25
     pm10_sensitive_total = 0
     air_quality_data = AIR_QUALITY_SENSITIVE["air_quality"][standard]
 
-    logger.info(f"현재 미세먼지 수치/등급 PM2.5 Value: {pm25_value}, PM10 Value: {pm10_value}"
-          f", PM2.5 Grade: {pm25_grade}, PM10 Grade: {pm10_grade}")
+    # logger.info(f"현재 미세먼지 수치/등급 PM2.5 Value: {pm25_value}, PM10 Value: {pm10_value}"
+    #       f", PM2.5 Grade: {pm25_grade}, PM10 Grade: {pm10_grade}")
+    
     # PM2.5 민감군 점수 계산
     pm25_scores = []
     for group in sensitivities:

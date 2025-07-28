@@ -33,24 +33,24 @@ class WalkabilityCalculator:
             # 기온에 따른 모피 보정
             temperature_coat_score = calculate_temperature_coat_score(temperature, dog_size, coat_type, coat_length)
             temperature_final_score = temperature_score - temperature_sensitive_score - temperature_coat_score
-            logger.info(f"Temperature Score: {temperature_score}"
-                f", Temperature Sensitive Score: {temperature_sensitive_score}, "
-                f"Temperature Coat Score: {temperature_coat_score}"
-                f", Temperature Final Score: {temperature_final_score}")
+            # logger.info(f"Temperature Score: {temperature_score}"
+            #     f", Temperature Sensitive Score: {temperature_sensitive_score}, "
+            #     f"Temperature Coat Score: {temperature_coat_score}"
+            #     f", Temperature Final Score: {temperature_final_score}")
 
             # 대기질 계산
             air_quality_score = calculate_air_quality_score(pm10_grade, pm10_value, pm25_grade, pm25_value, air_quality_type)
             # 미세먼지 민감군 점수 계산
             air_quality_sensitive_score = calculate_air_quality_sensitive_score(pm10_grade, pm10_value, pm25_grade, pm25_value, sensitivities, air_quality_type)
             air_quality_final_score = air_quality_score - air_quality_sensitive_score  
-            logger.info(f"Air Quality Score: {air_quality_score}, "
-                f"Air Quality Sensitive Score: {air_quality_sensitive_score}, "
-                f"Air Quality Final Score: {air_quality_final_score}")
+            # logger.info(f"Air Quality Score: {air_quality_score}, "
+            #     f"Air Quality Sensitive Score: {air_quality_sensitive_score}, "
+            #     f"Air Quality Final Score: {air_quality_final_score}")
             
             combined_score = round((temperature_final_score * 0.6) + (air_quality_final_score * 0.4))
-            logger.info(f"기온 최종 점수: {temperature_final_score}, 대기질 최종 점수: {air_quality_final_score}")
-            logger.info(f"가중치 별 점수 - 기온: {round(temperature_final_score * 0.6)}, 대기질: {round(air_quality_final_score * 0.4)}")
-            logger.info(f"최종 점수: {combined_score}")
+            # logger.info(f"기온 최종 점수: {temperature_final_score}, 대기질 최종 점수: {air_quality_final_score}")
+            # logger.info(f"가중치 별 점수 - 기온: {round(temperature_final_score * 0.6)}, 대기질: {round(air_quality_final_score * 0.4)}")
+            # logger.info(f"최종 점수: {combined_score}")
             walkability_score = round(max(0, min(100, combined_score)))
 
             if walkability_score >= 80:

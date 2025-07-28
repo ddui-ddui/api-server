@@ -116,6 +116,7 @@ async def get_walkability_hourly(
     # 시간별 날씨 정보 조회
     try:
         weather_data = await get_hourly_forecast(lat, lon, hours)
+
         if not weather_data:
             logger.error(f"날씨 정보 조회 실패: lat={lat}, lon={lon}")
             raise HTTPException(status_code=404, detail="날씨 정보를 찾을 수 없습니다.")
@@ -128,6 +129,7 @@ async def get_walkability_hourly(
     # 시간별 대기질 정보 조회
     try:
         airquality_data = await get_hourly_air_quality(lat, lon, hours)
+        
         if not airquality_data:
             logger.error(f"대기질 정보 조회 실패: lat={lat}, lon={lon}")
             raise HTTPException(status_code=404, detail="대기질 정보를 찾을 수 없습니다.")
@@ -147,6 +149,7 @@ async def get_walkability_hourly(
     
     # 민감군 comma 배열 처리
     sensitivities = sensitivities.split(",") if sensitivities else []
+
     combined_forecasts = []
     for weather in weather_forecasts:
         base_date = weather.get("base_date", "")
