@@ -27,6 +27,8 @@ async def get_current_air_quality(lat: float, lon: float, air_quality_type: str 
     # 가까운 측정소 찾기
     try:
         stations = await find_nearby_air_quality_station(lat, lon)
+    except HTTPException as e:
+        raise
     except Exception as e:
         logger.error(f"측정소 조회 오류: {str(e)}")
         raise HTTPException(status_code=500, detail="측정소 조회 오류")
@@ -79,9 +81,10 @@ async def find_nearby_air_quality_station(lat: float, lon: float) -> Optional[Li
             
             results.append(station_name)
         return results
-    
+    except HTTPException as e:
+        raise
     except Exception as e:
-        logger.error(f"측정소 조회 오류: {str(e)}")
+        logger.error(f"예상치 못한 측정소 조회 오류: {str(e)}")
         return None
 
 async def get_air_quality_data(stations: List[str], air_quality_type: str = 'korean') -> Dict[str, Any]:
