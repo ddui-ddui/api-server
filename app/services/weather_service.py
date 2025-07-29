@@ -4,7 +4,7 @@ from app.config.redis_config import get_redis_client
 from app.core.config import settings
 from typing import Any, Dict, List
 from datetime import datetime, timedelta
-from app.utils.cache_utils import calculate_ttl_to_next_mid_forecast, calculate_ttl_to_next_short_forecast
+from app.utils.cache_utils import calculate_ttl_to_next_mid_forecast, calculate_ttl_with_custom_hours
 from app.utils.convert_for_grid import mapToGrid
 from app.common.http_client import make_request
 from urllib.parse import unquote
@@ -369,7 +369,7 @@ async def get_hourly_forecast(lat: float, lon: float, hours: int = 12) -> Dict[s
 
         # 캐시 저장 (다음 단기예보 발표 시간까지)
         try:
-            ttl_seconds = calculate_ttl_to_next_short_forecast()
+            ttl_seconds = calculate_ttl_with_custom_hours(1)
             await redis.set(cache_key, json.dumps(result, default=str), ex=ttl_seconds)
             logger.info(f"시간별 날씨 예보 캐시에 저장: {cache_key}, TTL: {ttl_seconds}초")
         except Exception as e:
