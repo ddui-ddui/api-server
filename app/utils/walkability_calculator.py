@@ -40,7 +40,7 @@ class WalkabilityCalculator:
             # 31도 이상, 7월 8월, 하늘 상태 맑음, 현재 시간이 9시부터 5시 사이인 경우 나쁨으로 반환
             current_hour = datetime.now().hour
             current_month = datetime.now().month
-            if temperature >= 31 and sky_condition == 1 and current_month in [7, 8] and 9 <= current_hour <= 17:
+            if temperature >= 31 and (sky_condition == 1 or sky_condition == 3) and current_month in [7, 8] and 9 <= current_hour <= 17:
                 sky_condition_str = "맑음" if sky_condition == 1 else "흐림" if sky_condition == 4 else "구름많음"
                 logger.info(f"폭염 기준에 도달하여 산책 지수 나쁨으로 반환.")
                 logger.info(f"현재 시간: {current_hour}시, 현재 월: {current_month}, 기온: {temperature}도, 하늘 상태: {sky_condition_str}")
