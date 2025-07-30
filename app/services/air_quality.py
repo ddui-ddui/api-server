@@ -205,7 +205,6 @@ async def get_air_quality_data(stations: List[str], air_quality_type: str = 'kor
 
 async def get_hourly_air_quality(lat: float, lon: float, hours: int = 12) -> Dict[str, Any]:
     cached_data = await AirQualityCacheService().get_hourly_cache()
-    print(f"캐시된 시간별 대기질 데이터: {cached_data}")
     if cached_data:
         logger.info("캐시된 시간별 대기질 데이터를 반환합니다.")
         return process_air_quality_data(cached_data.forecasts, lat, lon, hours)
