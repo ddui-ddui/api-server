@@ -169,7 +169,8 @@ async def get_walkability_hourly(
                 "temperature": weather.get("temperature"),
                 "precipitation_type": weather.get("precipitation_type"),
                 "sky_condition": weather.get("sky_condition"),
-                "precipitation_probability": weather.get("precipitation_probability")
+                "precipitation_probability": weather.get("precipitation_probability"),
+                "precipitation_amount": weather.get("precipitation_amount"),
             }
         }
         
@@ -214,7 +215,7 @@ async def get_walkability_hourly(
             logger.error(f"산책 적합도 점수 계산 실패: {str(e)}")
             combined_data["walkability"] = {
                 "score": "N/A",
-                "grade": -1
+                "grade": 6
             }
        
         combined_forecasts.append(combined_data)
@@ -252,6 +253,7 @@ async def get_walkability_weekly(
     # 주간별 날씨 정보 조회
     try:
         weather_data = await get_weekly_forecast(lat, lon, days)
+        print(weather_data)
         if not weather_data:
             logger.error(f"날씨 정보 조회 실패: lat={lat}, lon={lon}")
             raise HTTPException(status_code=404, detail="날씨 정보를 찾을 수 없습니다.")
@@ -466,6 +468,8 @@ def _walkability_calculator(
             pm25_value=pm25_value,
             precipitation_type=weather_data.get("precipitation_type"),
             sky_condition=weather_data.get("sky_condition"),
+            precipitation_amount=weather_data.get("precipitation_amount", 0.0),
+            precipitation_probability=weather_data.get("precipitation_probability", 0),
             dog_size=dog_size,
             air_quality_type=air_quality_type,
             sensitivities=sensitivities,

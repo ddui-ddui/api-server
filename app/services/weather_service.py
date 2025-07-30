@@ -319,16 +319,23 @@ async def get_hourly_forecast(lat: float, lon: float, hours: int = 12) -> Dict[s
                 forecasts_by_time[key]["sky_condition"] = int(value)
             elif category == "POP":  # 강수확률
                 forecasts_by_time[key]["precipitation_probability"] = int(value)
-            # elif category == "PCP": # 강수량
-            #     amount = float(value)
-            #     if amount >= 0.1 and amount < 1.0:
-            #         forecasts_by_time[key]["precipitation_amount"] = f"{1}mm 미만"
-            #     elif amount >= 1.0 and amount < 30.0:
-            #         forecasts_by_time[key]["precipitation_amount"] = f"{value}mm"
-            #     elif amount >= 30.0 and amount < 50.0:
-            #         forecasts_by_time[key]["precipitation_amount"] = f"30mm~50mm"
-            #     elif amount >= 50.0:
-            #         forecasts_by_time[key]["precipitation_amount"] = f"50mm 이상"
+            elif category == "PCP": # 강수량
+                # 강수없음이라는 값이 넘어올 수 있음
+                if type(value) is str:
+                    value = 0.0
+                else:
+                    value = float(value)
+
+                forecasts_by_time[key]["precipitation_amount"] = value
+                # 기상청 가이드 문자열 처리
+                # if amount >= 0.1 and amount < 1.0:
+                #     forecasts_by_time[key]["precipitation_amount"] = f"{1}mm 미만"
+                # elif amount >= 1.0 and amount < 30.0:
+                #     forecasts_by_time[key]["precipitation_amount"] = f"{value}mm"
+                # elif amount >= 30.0 and amount < 50.0:
+                #     forecasts_by_time[key]["precipitation_amount"] = f"30mm~50mm"
+                # elif amount >= 50.0:
+                #     forecasts_by_time[key]["precipitation_amount"] = f"50mm 이상"
         
         future_forecasts = {}
         for key, forecast in forecasts_by_time.items():
@@ -347,7 +354,7 @@ async def get_hourly_forecast(lat: float, lon: float, hours: int = 12) -> Dict[s
         for key in sorted_keys:
             forecast = forecasts_by_time[key]
             # 필수 필드 확인
-            required_fields = ["temperature", "sky_condition", "precipitation_type", "precipitation_probability"]
+            required_fields = ["temperature", "sky_condition", "precipitation_type", "precipitation_probability", "precipitation_amount"]
         
             if all(field in forecast for field in required_fields):
                 # 날짜 형식 정리
@@ -569,13 +576,15 @@ async def get_weekly_forecast(lat: float, lon: float, days: int = 7) -> Dict[str
                 # 강수 형태와 하늘 상태 정보를 통합 처리
                 sky_condition = noon_forecast.get("sky_condition", 0)
                 precipitation_type = noon_forecast.get("precipitation_type", 0)
+                precipitation_probability = noon_forecast.get("precipitation_probability", 0)
                 
                 day_summary = {
                     "base_date": target_date_str,
                     "min_temperature": min_temp,
                     "max_temperature": max_temp,
                     "sky_condition": sky_condition,
-                    "precipitation_type": precipitation_type
+                    "precipitation_type": precipitation_type,
+                    "precipitation_probability": precipitation_probability
                 }
                 
                 weekly_forecast.append(day_summary)
@@ -603,7 +612,8 @@ async def get_weekly_forecast(lat: float, lon: float, days: int = 7) -> Dict[str
                     "min_temperature": day_forecast.get("min_temperature", 0),
                     "max_temperature": day_forecast.get("max_temperature", 0),
                     "sky_condition": day_forecast.get("sky_condition", 0),
-                    "precipitation_type": day_forecast.get("precipitation_type", 0)
+                    "precipitation_type": day_forecast.get("precipitation_type", 0),
+                    "precipitation_probability": day_forecast.get("precipitation_probability", 0)
                 }
                 weekly_forecast.append(normalized_forecast)
     
@@ -772,12 +782,24 @@ async def get_mid_range_forecast(nx: int, ny: int) -> List[Dict[str, Any]]:
             sky_key = f"wf{i}Pm"  # 오후 데이터 우선
         else:
             sky_key = f"wf{i}"     # 구분 없는 데이터
-        
+
+        # 강수확률 키
+        if i <= 7:
+            pop_key_am = f"rnSt{i}Am"
+            pop_key_pm = f"rnSt{i}Pm"
+        else:
+            pop_key = f"rnSt{i}"
+
         # 키 존재여부 확인
         if min_key not in temp_item or max_key not in temp_item or sky_key not in weather_item:
             continue
         
         weather_info = convert_weather_condition(weather_item.get(sky_key))
+
+        precipitation_probability = max(
+            int(temp_item.get(pop_key_am, 0)),
+            int(temp_item.get(pop_key_pm, 0)) if i <= 7 else int(temp_item.get(pop_key, 0))
+        )
         
         day_forecast = {
             "base_date": date_str,
@@ -785,6 +807,7 @@ async def get_mid_range_forecast(nx: int, ny: int) -> List[Dict[str, Any]]:
             "max_temperature": float(temp_item.get(max_key, 0)),
             "sky_condition": weather_info["sky_condition"],
             "precipitation_type": weather_info["precipitation_type"],
+            "precipitation_probability": precipitation_probability,
         }
         
         forecasts.append(day_forecast)

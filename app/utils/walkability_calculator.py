@@ -1,4 +1,4 @@
-import json
+from datetime import datetime
 from typing import Dict, Any
 from app.utils.temperature_calculator import  calculate_temperature_score, calculate_temperature_sensitive_score, calculate_temperature_coat_score
 from app.utils.airquality_calculator import calculate_air_quality_score, calculate_air_quality_sensitive_score
@@ -19,6 +19,8 @@ class WalkabilityCalculator:
                                    pm25_value: int,
                                    precipitation_type: int, 
                                    sky_condition: int,
+                                   precipitation_amount: float,
+                                   precipitation_probability: int,
                                    dog_size: str = "medium",
                                    air_quality_type: str = "korean",
                                    sensitivities: list = None,
@@ -26,6 +28,27 @@ class WalkabilityCalculator:
                                    coat_length: str = "long") -> Dict[str, Any]:
         
         try:
+            # 비가 오는 경우 나쁨으로 표시
+            if precipitation_amount >= 5.0 or precipitation_probability >= 80:
+                logger.info(f"강수량과 강수 확률이 기준치에 도달하여 지수 나쁨으로 반환.")
+                logger.info(f"강수량: {precipitation_amount}, 강수 확률(퍼센트): {precipitation_probability}")
+                return {
+                "walkability_score": 20,
+                "walkability_grade": 2,
+            }
+
+            # 31도 이상, 7월 8월, 하늘 상태 맑음, 현재 시간이 9시부터 5시 사이인 경우 나쁨으로 반환
+            current_hour = datetime.now().hour
+            current_month = datetime.now().month
+            if temperature >= 31 and sky_condition == 1 and current_month in [7, 8] and 9 <= current_hour <= 17:
+                sky_condition_str = "맑음" if sky_condition == 1 else "흐림" if sky_condition == 4 else "구름많음"
+                logger.info(f"폭염 기준에 도달하여 산책 지수 나쁨으로 반환.")
+                logger.info(f"현재 시간: {current_hour}시, 현재 월: {current_month}, 기온: {temperature}도, 하늘 상태: {sky_condition_str}")
+                return {
+                    "walkability_score": 20,
+                    "walkability_grade": 2,
+                }
+
             # 기온 계산
             temperature_score = calculate_temperature_score(temperature, dog_size)
             # 기온 민감군 점수 계산
@@ -52,7 +75,8 @@ class WalkabilityCalculator:
             # logger.info(f"가중치 별 점수 - 기온: {round(temperature_final_score * 0.6)}, 대기질: {round(air_quality_final_score * 0.4)}")
             # logger.info(f"최종 점수: {combined_score}")
             walkability_score = round(max(0, min(100, combined_score)))
-
+            
+            # 프론트에서 내림 차순으로 등급 매김
             if walkability_score >= 80:
                 walkability_grade = 5
             elif walkability_score >= 60:
