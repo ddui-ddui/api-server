@@ -51,6 +51,26 @@ async def get_walkability_current(
         logger.error(f"대기질 정보 조회 중 예상치 못한 오류: {str(e)}")
         raise HTTPException(status_code=500, detail="대기질 서비스 오류")
     
+    # 미세먼지 데이터 None일 경우 산책 적합도 계산 불가
+    if air_quality_data.get("is_error"):
+        air_quality_data = {
+            "pm10_value": -1,
+            "pm10_grade": -1,
+            "pm25_value": -1,
+            "pm25_grade": -1,
+        }
+
+        results["air_quality"] = air_quality_data   
+        results["walkability"] = {
+            "grade": -1
+        }
+        ootd_info = {
+            "ootd": [],
+            "phrases": "미세먼지 측정소 점검으로 산책 등급 제공 불가"
+        }
+        results["description"] = ootd_info
+        return {"forecasts": results}
+    
     results["air_quality"] = air_quality_data
 
     # 산책 적합도 점수 계산
@@ -76,7 +96,6 @@ async def get_walkability_current(
     except Exception as e:
         logger.error(f"산책 적합도 점수 계산 실패: {str(e)}")
         results["walkability"] = {
-            "score": "N/A",
             "grade": -1
         }
     

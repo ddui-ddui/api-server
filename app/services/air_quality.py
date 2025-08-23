@@ -73,6 +73,7 @@ async def find_nearby_air_quality_station(lat: float, lon: float) -> Optional[Li
             return None
 
         results = []
+        print(items)
         for item in items:
             # 측정소명
             station_name = item.get("stationName", "")
@@ -197,11 +198,16 @@ async def get_air_quality_data(stations: List[str], air_quality_type: str = 'kor
     
     # 모든 측정소를 시도했지만 유효한 데이터를 찾지 못한 경우
     logger.error(f"모든 측정소({len(stations)}개)에서 유효한 미세먼지 데이터를 찾을 수 없습니다.")
-    raise HTTPException(
-        status_code=404, 
-        detail=f"해당 지역의 미세먼지 데이터를 찾을 수 없습니다. 시도한 측정소: {', '.join(stations)}"
-    )
-    
+    logger.error(f"기본값으로 반환합니다.")
+    results = {
+        "pm10_value": None,
+        "pm10_grade": None,
+        "pm25_value": None,
+        "pm25_grade": None,
+        "air_quality_grade": None,
+        "is_error": True
+    }
+    return results
 
 async def get_hourly_air_quality(lat: float, lon: float, hours: int = 12) -> Dict[str, Any]:
     cached_data = await AirQualityCacheService().get_hourly_cache()
