@@ -112,7 +112,7 @@ def convert_lat_lon_for_region(lat: float, lon: float) -> str:
     :param lon: 경도
     :return: 지역 코드
     """
-    default_region = "서울"
+    default_region = ZONE_DATA[0]; # 기본값: 서울 종로구
     closest_region = None
     min_distance = float('inf')
     
