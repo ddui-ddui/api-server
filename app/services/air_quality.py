@@ -73,7 +73,6 @@ async def find_nearby_air_quality_station(lat: float, lon: float) -> Optional[Li
             return None
 
         results = []
-        print(items)
         for item in items:
             # 측정소명
             station_name = item.get("stationName", "")
@@ -519,7 +518,6 @@ async def get_weekly_air_quality_from_api(lat: float, lon: float, air_quality_ty
 def extract_region_data_from_cache(cached_forecasts: List[Dict], lat: float, lon: float, air_quality_type: str, days: int) -> Dict[str, Any]:
     """캐시된 전국 데이터에서 사용자 지역 데이터만 추출"""
     region = convert_lat_lon_for_region(lat, lon).get("subregion", "")
-    
     results = []
     
     try:

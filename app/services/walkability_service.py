@@ -272,7 +272,6 @@ async def get_walkability_weekly(
     # 주간별 날씨 정보 조회
     try:
         weather_data = await get_weekly_forecast(lat, lon, days)
-        print(weather_data)
         if not weather_data:
             logger.error(f"날씨 정보 조회 실패: lat={lat}, lon={lon}")
             raise HTTPException(status_code=404, detail="날씨 정보를 찾을 수 없습니다.")
