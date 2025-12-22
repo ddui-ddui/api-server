@@ -38,6 +38,16 @@ class AirQualityCacheService:
         except Exception as e:
             logger.error(f"시간별 캐시 저장 실패: {str(e)}")
 
+    async def delete_hourly_cache(self):
+        """시간별 대기질 캐시 삭제"""
+        try:
+            redis = await self.redis_client.get_client()
+            
+            await redis.delete(self.HOURLY_KEY)
+            logger.info(f"시간별 캐시 삭제 완료")
+        except Exception as e:
+            logger.error(f"시간별 캐시 삭제 실패: {str(e)}")
+
     async def get_weekly_cache(self) -> Optional[WeeklyAirQualityCache]:
         """주간별 대기질 캐시 조회"""
         try:
@@ -61,5 +71,15 @@ class AirQualityCacheService:
             logger.info(f"주간별 캐시 저장 완료")
         except Exception as e:
             logger.error(f"주간별 캐시 저장 실패: {str(e)}")
+
+    async def delete_weekly_cache(self):
+        """주간별 대기질 캐시 삭제"""
+        try:
+            redis = await self.redis_client.get_client()
+            
+            await redis.delete(self.WEEKLY_KEY)
+            logger.info(f"주간별 캐시 삭제 완료")
+        except Exception as e:
+            logger.error(f"주간별 캐시 삭제 실패: {str(e)}")
 
 air_quality_cache_service = AirQualityCacheService()
