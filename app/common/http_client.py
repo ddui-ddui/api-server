@@ -153,6 +153,7 @@ async def make_request(
                         
             except json.JSONDecodeError:
                 logger.error("JSON 응답 파싱 오류")
+                logger.info(f"Response: {response}")
                 raise HTTPException(status_code=500, detail="API 응답 형식 오류")
 
         return response
