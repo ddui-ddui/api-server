@@ -308,7 +308,6 @@ async def get_walkability_weekly(
         key = base_date
         
         # 해당 시간의 대기질 데이터 찾기
-        print(key)
         air_quality = air_forecast_map.get(key, None)
         
         # 산책지수 데이터 생성
